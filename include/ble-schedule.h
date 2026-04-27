@@ -48,6 +48,7 @@ namespace ble_schedule
 
     /**
      * Calls internal init functions/setup and starts advertising.
+     * Allocates memory for internal buffer to store data from BLE.
      */
     void start(void);
 
@@ -58,7 +59,15 @@ namespace ble_schedule
     void block_until_connected(void);
 
     /**
+     * Receives data from BLE and reads it into internal buffer.
+     * This function IS blocking, and if no data is received, it will timeout.
+     * @return 0 = all good, 1 = timeout (no data at all), 2 = other problem (some data received, not not as expected)
+     */
+    uint8_t receive_schedule_data(void);
+
+    /**
      * Calls internal NuSerial stop function.
+     * Frees internal buffer.
      */
     void stop(void);
 
@@ -68,22 +77,31 @@ namespace ble_schedule
     bool ble_is_connected(void);
 
     /**
-     * @brief Simply reads bytes into library's internal buffer until there are no more bytes available.
-     * The buffer will overwrite the oldest data if it overflows.
+     * Saves data in the internal buffer to the SD card.
+     * (Data in buffer remains untouched).
+     * NOTE: Do NOT call this function before stop(), when the internal buffer gets de-allocated.
+     * @return False if SD card is missing or some other problem (like no buffer)
      */
-    void read_bytes(void);
+    bool save_schedule_to_sd(void);
 
     /**
-     * De-allocates and re-allocates the internal buffer.
-     * Assume all previously-stored data gets yeeted.
+     * Gets the name of the schedule currently loaded into Remigotchi's SD card.
+     * Undefined behavior if there is no schedule loaded into Remigotchi.
      */
-    void reset_buffer(void);
-
-    void save_schedule_to_sd(void);
-
     char *get_schedule_name(uint8_t schedule_idx);
 
-    void get_num_events(uint8_t schedule_idx);
+    /**
+     * Gets the number of events in the schedule currently loaded into Remigotchi's SD card.
+     * Undefined behavior if there is no schedule loaded into Remigotchi.
+     */
+    uint8_t get_num_events(uint8_t schedule_idx);
 
+    /**
+     * Provide access to a specific event, identified by event_idx.
+     * @param event_idx Index of which event to get.  Valid range: [0, total # of events -1]
+     * @param e Variable to provide caller access to an event_t.
+     * Undefined behavior if there is no schedule loaded into Remigotchi.
+     * Undefined behavior if event_idx is outside the valid range.
+     */
     void get_event(uint8_t event_idx, event_t &e);
 }
