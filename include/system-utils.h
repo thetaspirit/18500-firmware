@@ -4,6 +4,7 @@
  * vibration setting
  * brightness level
  * UTC offset
+ * Remi character
  */
 
 #pragma once

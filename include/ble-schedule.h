@@ -43,8 +43,7 @@ namespace ble_schedule
         uint16_t end_time;
         // 1 byte
         uint8_t days_of_week;
-        uint8_t padding[1];
-    } event_t; // 40 bytes total
+    } event_t; // 39 bytes total
 
     typedef struct
     {
@@ -93,14 +92,21 @@ namespace ble_schedule
     /**
      * Gets the name of the schedule currently loaded into Remigotchi's SD card.
      * Undefined behavior if there is no schedule loaded into Remigotchi.
+     * Must call free() on the string that gets returned.
      */
-    char *get_schedule_name(uint8_t schedule_idx);
+    char *get_schedule_name();
 
     /**
      * Gets the number of events in the schedule currently loaded into Remigotchi's SD card.
      * Undefined behavior if there is no schedule loaded into Remigotchi.
      */
-    uint8_t get_num_events(uint8_t schedule_idx);
+    uint8_t get_num_events();
+
+    /**
+     * Gets which Remi character the user selected in the desktop app.
+     * Undefined behavior if there is no schedule loaded into Remigotchi.
+     */
+    uint8_t get_remi();
 
     /**
      * Provide access to a specific event, identified by event_idx.
@@ -109,5 +115,5 @@ namespace ble_schedule
      * Undefined behavior if there is no schedule loaded into Remigotchi.
      * Undefined behavior if event_idx is outside the valid range.
      */
-    void get_event(uint8_t event_idx, event_t &e);
+    void get_event(uint8_t event_idx, event_t *e);
 }

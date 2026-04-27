@@ -2,22 +2,6 @@
 
 namespace ble_schedule
 {
-    uint8_t fake_data[] = {
-        0x53, 0x62, 0x79, 0x74, 0x65, 0x73, 0x20, 0x74,
-        0x65, 0x73, 0x74, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x02, 0x03, 0x45, 0x72, 0x65, 0x6D, 0x69,
-        0x6E, 0x64, 0x65, 0x72, 0x5F, 0x31, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x3C, 0x01, 0x68, 0x04, 0x38,
-        0x3E, 0x45, 0x72, 0x65, 0x6D, 0x69, 0x6E, 0x64,
-        0x65, 0x72, 0x5F, 0x32, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0xA0,
-        0x01, 0xA4, 0x03, 0xFC, 0x7F};
-
     uint8_t *buffer = NULL;
     int buff_idx = -1;
 
@@ -158,33 +142,130 @@ namespace ble_schedule
 
     bool save_schedule_to_sd()
     {
-        Serial.println("Saving data");
+        if (buffer == NULL || buff_idx == -1)
+        {
+            Serial.println("Buffer is NULL.");
+            return false;
+        }
+        if (!utils::get_sd_status())
+        {
+            Serial.println("Can't write to SD card.");
+            return false;
+        }
+
         File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_WRITE);
-        sched_file.write(fake_data, sizeof(fake_data));
+        sched_file.write(buffer, buff_idx);
         sched_file.close();
         Serial.println("Data saved");
         return true;
-
-        // if (buffer == NULL || buff_idx == -1)
-        // {
-        //     Serial.println("Buffer is NULL.");
-        //     return false;
-        // }
-        // if (!utils::get_sd_status())
-        // {
-        //     Serial.println("Can't write to SD card.");
-        //     return false;
-        // }
-
-        // File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_WRITE);
-        // sched_file.write(buffer, buff_idx);
-        // sched_file.close();
-        // Serial.println("Data saved");
-        // return true;
     }
 
-    bool read_schedule_from_sd()
+    char *get_schedule_name()
     {
+        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        if (!sched_file)
+        {
+            Serial.println("Failed to open schedule file.");
+            return NULL;
+        }
+
+        // Skip the first byte ('S')
+        sched_file.read();
+
+        // Read 32 bytes of schedule name
+        char name_buffer[32]; // 32 bytes + null terminator
+        sched_file.read((uint8_t *)name_buffer, 32);
+
+        sched_file.close();
+
+        // Allocate memory for the returned string
+        char *schedule_name = (char *)malloc(strlen(name_buffer) + 1);
+        strcpy(schedule_name, name_buffer);
+
+        return schedule_name;
+    }
+
+    uint8_t get_num_events()
+    {
+        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        if (!sched_file)
+        {
+            Serial.println("Failed to open schedule file.");
+            return 0;
+        }
+
+        // Skip the first byte ('S') and 32 bytes of schedule name
+        sched_file.seek(33);
+
+        // Read the byte representing the number of events
+        uint8_t num_events = sched_file.read();
+
+        sched_file.close();
+
+        return num_events;
+    }
+
+    uint8_t get_remi()
+    {
+        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        if (!sched_file)
+        {
+            Serial.println("Failed to open schedule file.");
+            return 0;
+        }
+
+        // Skip the first byte ('S'), 32 bytes of schedule name, and one byte for number of events
+        sched_file.seek(34);
+
+        // Read the byte representing the number of events
+        uint8_t remi = sched_file.read();
+
+        sched_file.close();
+
+        return remi;
+    }
+
+    void get_event(uint8_t event_idx, event_t *e)
+    {
+        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        if (!sched_file)
+        {
+            Serial.println("Failed to open schedule file.");
+            return;
+        }
+
+        // Read the number of events directly from the open file
+        sched_file.seek(33);
+        uint8_t num_events = sched_file.read();
+
+        // Check if event_idx is within bounds
+        if (event_idx >= num_events)
+        {
+            Serial.println("Event index out of range.");
+            sched_file.close();
+            return;
+        }
+
+        // Calculate the file position of the requested event
+        // File layout: [S(1)] [name(32)] [num_events(1)] [remi(1)] [E(1) + event_t(39)]*
+        // Position = 35 (header) + event_idx * 40 (1 byte 'E' + 39 bytes event_t)
+        int file_position = 35 + event_idx * 40;
+
+        // Seek to the 'E' character
+        sched_file.seek(file_position);
+
+        // Skip the 'E' character
+        sched_file.read();
+
+        // Read 39 bytes into the event_t structure
+        sched_file.read((uint8_t *)e, 39);
+
+        // Convert big-endian uint16_t fields to little-endian
+        e->period = (e->period >> 8) | ((e->period & 0xFF) << 8);
+        e->start_time = (e->start_time >> 8) | ((e->start_time & 0xFF) << 8);
+        e->end_time = (e->end_time >> 8) | ((e->end_time & 0xFF) << 8);
+
+        sched_file.close();
     }
 
 }

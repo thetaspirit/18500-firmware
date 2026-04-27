@@ -7,30 +7,46 @@
 
 void setup()
 {
-  pinMode(BUTTON_1, INPUT_PULLDOWN);
-  pinMode(BUTTON_2, INPUT_PULLDOWN);
-  pinMode(BUTTON_3, INPUT_PULLDOWN);
-  pinMode(BUTTON_4, INPUT_PULLDOWN);
-
-  // put your setup code here, to run once:
   Serial.begin(115200);
+  analogReadMilliVolts(BATT_MON);
+  utils::buttons_init();
 
   while (!digitalRead(BUTTON_1))
   {
   }
-  ble_schedule::start();
-  ble_schedule::block_until_connected();
+  utils::sd_begin();
 
-  while (!digitalRead(BUTTON_2))
-  {
-    ble_schedule::receive_schedule_data();
-  }
-  ble_schedule::save_schedule_to_sd();
+  char *schedule_name = ble_schedule::get_schedule_name();
+  Serial.println(schedule_name);
+  free(schedule_name);
 
-  while (!digitalRead(BUTTON_3))
-  {
-  }
-  ble_schedule::stop();
+  Serial.printf("Events: %d Remi: %d\n", ble_schedule::get_num_events(), ble_schedule::get_remi());
+
+  ble_schedule::event_t test_event;
+
+  ble_schedule::get_event(0, &test_event);
+  Serial.print("Event name: ");
+  Serial.println(test_event.name);
+  Serial.print("Period: ");
+  Serial.println(test_event.period);
+  Serial.print("Start time: ");
+  Serial.println(test_event.start_time);
+  Serial.print("End time: ");
+  Serial.println(test_event.end_time);
+  Serial.print("Days of week: ");
+  Serial.println(test_event.days_of_week);
+
+  ble_schedule::get_event(1, &test_event);
+  Serial.print("Event name: ");
+  Serial.println(test_event.name);
+  Serial.print("Period: ");
+  Serial.println(test_event.period);
+  Serial.print("Start time: ");
+  Serial.println(test_event.start_time);
+  Serial.print("End time: ");
+  Serial.println(test_event.end_time);
+  Serial.print("Days of week: ");
+  Serial.println(test_event.days_of_week);
 }
 
 void loop()
