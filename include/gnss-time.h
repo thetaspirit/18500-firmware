@@ -52,6 +52,14 @@ namespace gnss_time
         uint8_t second; // second of the minute [0, 59]
     };
 
+    enum UpdateStatus
+    {
+        UPDATED_BOTH,
+        UPDATED_TIME_ONLY,
+        UPDATED_DATE_ONLY,
+        UPDATED_NONE
+    };
+
     /**
      * @brief Initializes communication with the U-BLOX MAX-M10S.  Call this function multiple times if init does not work on the first try.
      *
@@ -75,42 +83,24 @@ namespace gnss_time
     int estimate_utc_offset();
 
     /**
-     * @brief This library will remember the most recent (valid) UTC offset it estimated based on the user's position.
-     * Note that this data will only ever get updated if 2 things happen:
-     * 1) The user actually calls the estimate_utc_offset() function and
-     * 2) That function was able to get a resonably accurate GNSS fix to make such an estimation.
-     * @return the most recent and accurate UTC offset estimation.
+     * @brief Attempts to retrieve the current date and time from GNSS and store that into the RTC.
+     * @return Status indicating what it was or was not able to acquire.
      */
-    int get_saved_utc_offset();
+    UpdateStatus update_gnss_datetime();
 
     /**
-     * @brief Retrieves the current date and time and applies the given UTC offset.
-     * The microcontroller uses its internal RTC to keep track of time, and if more than
-     * GNSS_UPDATE_RATE_HOURS hours have passed since updating the time from GNSS,
-     * this function will also attempt to retrieve an updated time from GNSS.
+     * @brief Attempts to retrieve the current date and time from GNSS and applies the given UTC offset to it.
+     * Note that this function does not modify the RTC.
      *
      * @param utc_offset The UTC timezone offset in hours
      * @param datetime Pointer to DateTime struct to store the result
-     * @return true if successful, false if unable to retrieve datetime
+     * @return Status indicating what it was or was not able to acquire.
      */
-    bool get_datetime(int utc_offset, DateTime *datetime);
+    UpdateStatus get_gnss_datetime(int utc_offset, DateTime *datetime);
 
     /**
-     * @brief Retrieves the current date and time and applies the given UTC offset.
-     * This function will also attempt to retrieve an updated time from GNSS, regardless
-     * of when the last GNSS update was done.
-     *
-     * @param utc_offset The UTC timezone offset in hours
-     * @param datetime Pointer to DateTime struct to store the result
-     * @return true if successful, false if unable to retrieve datetime
+     * @brief Retrieves whatever time the internal RTC has, and applies the provided UTC offset.
      */
-    bool get_gnss_datetime(int utc_offset, DateTime *datetime);
+    void get_rtc_datetime(int utc_offset, DateTime *datetime);
 
-    int get_SIV(); // returns the number of satellites in view
-    bool get_gnss_fix_ok();
-    bool get_time_fully_resolved(); // returns whether or not time is able to be fully resolved
-    bool get_date_valid();
-    bool get_time_valid();
-    bool get_confirmed_date();
-    bool get_confirmed_time();
 }
