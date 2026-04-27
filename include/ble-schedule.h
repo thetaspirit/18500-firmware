@@ -16,14 +16,20 @@
 
 #include <NimBLEDevice.h>
 #include "NuSerial.hpp"
+#include "system-utils.h"
 
 #define DEVICE_NAME "Remigotchi 18500"
 
 /* Size of buffer, in bytes */
 #define BUFFER_SIZE 512
 
+/* The amount of milliseconds to wait for data after connecting to the desktop app. */
+#define SCHEDULE_RECEIVE_TIMEOUT_MS 10000
+
 #define SCHEDULE_CHAR 'S'
 #define EVENT_CHAR 'E'
+
+#define SCHEDULE_SD_FILEPATH "/schedule.bin"
 
 namespace ble_schedule
 {
