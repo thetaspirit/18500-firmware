@@ -79,16 +79,6 @@ namespace utils
     bool init();
 
     /**
-     * Call before accessing SD card to ensure proper bus control
-     */
-    void select_sd();
-
-    /**
-     * Call after SD card access completes
-     */
-    void deselect_sd();
-
-    /**
      * Wrapper for SD.open function.
      * Don't forget to call close on this file when done!
      * Caller is responsible for calling close.

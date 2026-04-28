@@ -6,23 +6,8 @@
 #include "system-utils.h"
 #include "state-machine.h"
 
-void setup()
+void print_daily_schedule()
 {
-  Serial.begin(115200);
-  Serial.println("Beginning.");
-  analogReadMilliVolts(BATT_MON);
-  utils::buttons::init();
-
-  utils::configs::init();
-  utils::shared_spi::init();
-  utils::sd_card::init();
-
-  while (!digitalRead(BUTTON_1))
-  {
-  }
-
-  rfid::init();
-
   // Test load_today_schedule function
   Serial.println("Testing load_today_schedule:");
   const char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
@@ -50,6 +35,37 @@ void setup()
   Serial.println("load_today_schedule test complete!");
 }
 
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println("Beginning.");
+  analogReadMilliVolts(BATT_MON);
+  utils::buttons::init();
+
+  utils::configs::init();
+  utils::shared_spi::init();
+  utils::sd_card::init();
+
+  while (!digitalRead(BUTTON_1))
+  {
+  }
+
+  rfid::init();
+
+}
+
 void loop()
 {
+  if (digitalRead(BUTTON_1))
+  {
+    rfid::print_uid();
+    delay(250);
+  }
+
+  if (digitalRead(BUTTON_2))
+  {
+    print_daily_schedule();
+    delay(250);
+  }
+  delay(10);
 }

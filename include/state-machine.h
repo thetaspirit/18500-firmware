@@ -2,6 +2,7 @@
 
 namespace states
 {
+  // Current state count is at a total of 22
   enum class MainState
   {
     HOME,

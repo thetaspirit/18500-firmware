@@ -173,6 +173,29 @@ namespace utils
   {
     bool sd_init = false;
 
+    /**
+     * Call before accessing SD card to ensure proper bus control
+     */
+    void select_sd()
+    {
+      // Deselect RFID reader
+      digitalWrite(RFID_CS, HIGH);
+      delay(1);
+      // Select SD card
+      digitalWrite(SD_CS, LOW);
+      delay(1);
+    }
+
+    /**
+     * Call after SD card access completes
+     */
+    void deselect_sd()
+    {
+      // Release SD card
+      digitalWrite(SD_CS, HIGH);
+      delay(1);
+    }
+
     bool init()
     {
       // Setup SD card CS pin
@@ -195,23 +218,6 @@ namespace utils
       digitalWrite(SD_CS, HIGH);
 
       return sd_init;
-    }
-
-    void select_sd()
-    {
-      // Deselect RFID reader
-      digitalWrite(RFID_CS, HIGH);
-      delay(1);
-      // Select SD card
-      digitalWrite(SD_CS, LOW);
-      delay(1);
-    }
-
-    void deselect_sd()
-    {
-      // Release SD card
-      digitalWrite(SD_CS, HIGH);
-      delay(1);
     }
 
     fs::File sd_open_file(const char *path, const char *mode)

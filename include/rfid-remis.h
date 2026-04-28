@@ -10,4 +10,8 @@ namespace rfid
    * Important: utils::shared_spi::init() must be called BEFORE this function!
    */
   bool init(void);
+
+  uint16_t get_uid(void);
+
+  void print_uid(void);
 }
