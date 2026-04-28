@@ -20,7 +20,10 @@
 #define SHARED_COPI 38
 #define SHARED_CIPO 39
 #define SHARED_SCLK 40
-#define SHARED_CS 41
+#define SD_CS 41
+
+#define RFID_CS 42
+#define RFID_RST 47
 
 namespace utils
 {
@@ -60,13 +63,30 @@ namespace utils
     void init(void);
   }
 
+  namespace shared_spi
+  {
+    extern SPIClass shared_SPI;
+    bool init();
+  }
+
   namespace sd_card
   {
 
     /**
+     * Important: utils::shared_spi::init() must be called BEFORE this function!
      * wrapper for SD.begin function
      */
     bool init();
+
+    /**
+     * Call before accessing SD card to ensure proper bus control
+     */
+    void select_sd();
+
+    /**
+     * Call after SD card access completes
+     */
+    void deselect_sd();
 
     /**
      * Wrapper for SD.open function.

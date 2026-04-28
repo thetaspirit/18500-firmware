@@ -157,25 +157,69 @@ namespace utils
     }
   }
 
-  namespace sd_card
+  namespace shared_spi
   {
     SPIClass shared_SPI;
+    bool init(void)
+    {
+      // Initialize the shared SPI bus
+      // Note: chip select pin is not used here as CS is handled per-device
+      shared_SPI.begin(SHARED_SCLK, SHARED_CIPO, SHARED_COPI);
+      return true;
+    }
+  }
+
+  namespace sd_card
+  {
     bool sd_init = false;
 
     bool init()
     {
-      shared_SPI.begin(SHARED_SCLK, SHARED_CIPO, SHARED_COPI, SHARED_CS);
-      sd_init = SD.begin(SHARED_CS, shared_SPI);
+      // Setup SD card CS pin
+      pinMode(SD_CS, OUTPUT);
+      digitalWrite(SD_CS, HIGH); // CS idle HIGH
+
+      // Temporarily deselect RFID reader to avoid bus conflicts
+      pinMode(RFID_CS, OUTPUT);
+      digitalWrite(RFID_CS, HIGH);
+
+      // Initialize SD card WITHOUT passing CS pin - we'll manage it manually
+      // Use SD.begin with just the SPI object
+      sd_init = SD.begin(SD_CS, shared_spi::shared_SPI);
       if (!sd_init)
       {
         Serial.println("SD card init failed");
       }
+
+      // After init, ensure SD CS is released
+      digitalWrite(SD_CS, HIGH);
+
       return sd_init;
+    }
+
+    void select_sd()
+    {
+      // Deselect RFID reader
+      digitalWrite(RFID_CS, HIGH);
+      delay(1);
+      // Select SD card
+      digitalWrite(SD_CS, LOW);
+      delay(1);
+    }
+
+    void deselect_sd()
+    {
+      // Release SD card
+      digitalWrite(SD_CS, HIGH);
+      delay(1);
     }
 
     fs::File sd_open_file(const char *path, const char *mode)
     {
-      return SD.open(path, mode);
+      select_sd();
+      fs::File file = SD.open(path, mode);
+      deselect_sd();
+      return file;
     }
 
     bool get_sd_status()

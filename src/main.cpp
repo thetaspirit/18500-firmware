@@ -9,15 +9,19 @@
 void setup()
 {
   Serial.begin(115200);
+  Serial.println("Beginning.");
   analogReadMilliVolts(BATT_MON);
   utils::buttons::init();
 
   utils::configs::init();
+  utils::shared_spi::init();
   utils::sd_card::init();
 
   while (!digitalRead(BUTTON_1))
   {
   }
+
+  rfid::init();
 
   // Test load_today_schedule function
   Serial.println("Testing load_today_schedule:");
