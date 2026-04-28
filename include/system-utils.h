@@ -24,15 +24,49 @@
 
 namespace utils
 {
+  namespace configs
+  {
+    /**
+     * All this is stuff that's saved in NVS
+     */
+
+    void init(void);
+
+    void set_sound(bool sound);
+    bool get_sound(void);
+
+    void set_vibrate(bool vib);
+    bool get_vibrate(void);
+
+    /**
+     * Value is a 2 for high or 1 for low.
+     * All other numbers are invalid.
+     */
+    void set_brightness(uint8_t brightness);
+    uint8_t get_brightness(void);
+
+    void set_remi(uint8_t remi);
+    uint8_t get_remi(void);
+
+    void set_utc_offset(int offset);
+    int get_utc_offset(void);
+
+  }
+  namespace buttons
+  {
     /**
      * Initializes buttons.
      */
-    void buttons_init(void);
+    void init(void);
+  }
+
+  namespace sd_card
+  {
 
     /**
      * wrapper for SD.begin function
      */
-    bool sd_begin();
+    bool init();
 
     /**
      * Wrapper for SD.open function.
@@ -46,4 +80,5 @@ namespace utils
      *
      */
     bool get_sd_status();
+  }
 }

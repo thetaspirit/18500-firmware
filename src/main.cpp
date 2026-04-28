@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <nvs_flash.h>
 #include "ble-schedule.h"
 #include "gnss-time.h"
 #include "remigraphics.h"
@@ -9,44 +10,43 @@ void setup()
 {
   Serial.begin(115200);
   analogReadMilliVolts(BATT_MON);
-  utils::buttons_init();
+  utils::buttons::init();
+
+  utils::configs::init();
 
   while (!digitalRead(BUTTON_1))
   {
   }
-  utils::sd_begin();
 
-  char *schedule_name = ble_schedule::get_schedule_name();
-  Serial.println(schedule_name);
-  free(schedule_name);
+  // Test NVS settings implementation
+  Serial.printf("\n=== Testing NVS Settings Implementation ===\n");
 
-  Serial.printf("Events: %d Remi: %d\n", ble_schedule::get_num_events(), ble_schedule::get_remi());
+  // Test sound setting
+  // utils::configs::set_sound(true);
+  bool sound = utils::configs::get_sound();
+  Serial.printf("Sound: %s\n", sound ? "enabled" : "disabled");
 
-  ble_schedule::event_t test_event;
+  // Test vibration setting
+  // utils::configs::set_vibrate(true);
+  bool vibrate = utils::configs::get_vibrate();
+  Serial.printf("Vibration: %s\n", vibrate ? "enabled" : "disabled");
 
-  ble_schedule::get_event(0, &test_event);
-  Serial.print("Event name: ");
-  Serial.println(test_event.name);
-  Serial.print("Period: ");
-  Serial.println(test_event.period);
-  Serial.print("Start time: ");
-  Serial.println(test_event.start_time);
-  Serial.print("End time: ");
-  Serial.println(test_event.end_time);
-  Serial.print("Days of week: ");
-  Serial.println(test_event.days_of_week);
+  // Test brightness setting
+  // utils::configs::set_brightness(2);
+  uint8_t brightness = utils::configs::get_brightness();
+  Serial.printf("Brightness: %d\n", brightness);
 
-  ble_schedule::get_event(1, &test_event);
-  Serial.print("Event name: ");
-  Serial.println(test_event.name);
-  Serial.print("Period: ");
-  Serial.println(test_event.period);
-  Serial.print("Start time: ");
-  Serial.println(test_event.start_time);
-  Serial.print("End time: ");
-  Serial.println(test_event.end_time);
-  Serial.print("Days of week: ");
-  Serial.println(test_event.days_of_week);
+  // Test remi character setting
+  // utils::configs::set_remi(3);
+  uint8_t remi = utils::configs::get_remi();
+  Serial.printf("Remi Character: %d\n", remi);
+
+  // Test UTC offset setting
+  // utils::configs::set_utc_offset(-5);
+  int utc_offset = utils::configs::get_utc_offset();
+  Serial.printf("UTC Offset: %d\n", utc_offset);
+
+  Serial.printf("=== NVS Settings Test Complete ===\n\n");
 }
 
 void loop()
