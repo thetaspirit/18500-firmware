@@ -11,7 +11,10 @@ namespace rfid
    */
   bool init(void);
 
-  uint16_t get_uid(void);
+  /**
+   * @return UID of the card detected.  0 = no card found, or there was some other problem.
+   */
+  uint32_t get_uid(void);
 
   void print_uid(void);
 }
