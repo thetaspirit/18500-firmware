@@ -1,10 +1,6 @@
-#include "system-utils.h"
-#include <nvs_flash.h>
-#include <nvs.h>
-#include <esp_sleep.h>
-#include <sys/time.h>
-#include <time.h>
 
+#include "system-utils.h"
+#include "alarms.h"
 namespace utils
 {
   namespace configs
@@ -152,70 +148,25 @@ namespace utils
 
   namespace sleep
   {
-    /**
-     * @brief Helper function to convert a DateTime struct to a Unix timestamp (time_t)
-     *
-     * @param dt The DateTime struct to convert
-     * @return time_t The Unix timestamp (seconds since epoch)
-     */
-    static time_t _dateTimeToUnixTime(const gnss_time::DateTime &dt)
+
+    void set_next_wakeup_time(uint16_t time)
     {
-      // Count days since epoch (1970-01-01)
-      uint32_t days = 0;
-
-      // Count leap years from 1970 to year-1
-      for (uint16_t y = 1970; y < dt.year; y++)
+      uint16_t now = gnss_time::get_minutes_after_midnight();
+      if (time <= now)
       {
-        if ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0))
-          days += 366;
-        else
-          days += 365;
+        Serial.printf("Error: wakeup time = %d but now = %d.  Device wakeup not set.\n", time, now);
+        return;
       }
 
-      // Count days for months in the current year
-      const uint8_t daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-      bool isLeapYear = (dt.year % 4 == 0 && dt.year % 100 != 0) || (dt.year % 400 == 0);
-
-      for (uint8_t m = 1; m < dt.month; m++)
-      {
-        days += daysInMonth[m];
-        if (m == 2 && isLeapYear)
-          days++;
-      }
-
-      // Add days in current month
-      days += dt.day - 1;
-
-      // Convert to seconds and add time components
-      return (time_t)days * 86400 + dt.hour * 3600 + dt.minute * 60 + dt.second;
-    }
-
-    void set_next_wakeup_time(const gnss_time::DateTime &wakeup_time)
-    {
-      // Get current time
-      struct timeval now;
-      gettimeofday(&now, NULL);
-      time_t current_time = now.tv_sec;
-
-      // Convert target wakeup time to Unix timestamp
-      time_t wakeup_timestamp = _dateTimeToUnixTime(wakeup_time);
-
-      // Calculate seconds until wakeup
-      int64_t seconds_until_wakeup = wakeup_timestamp - current_time;
-
-      // If the target time has already passed today, schedule for tomorrow
-      if (seconds_until_wakeup <= 0)
-      {
-        seconds_until_wakeup += 86400; // Add one day (86400 seconds)
-      }
-
-      // Convert seconds to microseconds and configure the timer
-      uint64_t microseconds = (uint64_t)seconds_until_wakeup * 1000000;
+      uint16_t minutes = time - now; // minutes from now until wakeup
+      uint64_t microseconds = minutes * 6e7;
       esp_sleep_enable_timer_wakeup(microseconds);
     }
 
     void go_to_sleep()
     {
+      set_next_wakeup_time(alarms::get_upcoming_alarm()->time);
+      Serial.println("--Going to sleep now.--");
       esp_deep_sleep_start();
     }
   }

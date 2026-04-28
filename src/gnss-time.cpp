@@ -389,4 +389,12 @@ namespace gnss_time
     _timevalToDateTime(tv, utc_offset, *datetime);
   }
 
+  uint16_t get_minutes_after_midnight()
+  {
+    gnss_time::DateTime dt;
+    gnss_time::get_rtc_datetime(utils::configs::get_utc_offset(), &dt);
+    uint16_t now = ((uint16_t)dt.hour * 60) + (uint16_t)dt.minute;
+    return now;
+  }
+
 }

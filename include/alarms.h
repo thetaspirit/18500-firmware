@@ -1,10 +1,12 @@
 
 #pragma once
+#include "ble-schedule.h"
 #include "esp_timer.h"
 #include "rfid-remis.h"
-#include "system-utils.h"
 #include "gnss-time.h"
-#include "ble-schedule.h"
+#include "system-utils.h"
+
+#define ALARM_LOG_FILEPATH "/alarm-log.csv"
 
 namespace alarms
 {
@@ -21,7 +23,6 @@ namespace alarms
   {
     uint16_t time; // time at which the alarm should go off, in minutes after midnight.  This is to account for recurring events.
     ble_schedule::event_t *e;
-    Response r;
   } alarm_t;
 
   struct alarm_list
@@ -31,17 +32,30 @@ namespace alarms
   };
 
   /**
+   * Only need to call this once on startup
+   */
+  void init(void);
+
+  /**
+   * Call this function on startup, or when the day changes.
    * Runs all the required setup involved in starting a new day.
    * Yes, this means alarms snoozed across midnight just get deleted.
    * Including the necessary allocates and frees.
+   * @param day Day of the week [1, 7]
    */
-  void setup_today(void);
+  void setup_day(uint8_t day);
 
   /**
    * @return A pointer to the alarm struct for the upcoming (nearest) alarm.
    * This function also runs a check on the list of today's alarms.
    * If there is no "next alarm" for today, it will delete today's list, and
    * generate tomorrow's.  Then, it will return a pointer to the first of tomorrow's alarms.
+   */
+  alarm_t *find_next_alarm(void);
+
+  /**
+   * @return A pointer to the alarm in the internal field upcoming_alarm.
+   * Does not do any searches.
    */
   alarm_t *get_upcoming_alarm(void);
 
@@ -59,6 +73,14 @@ namespace alarms
   void set_alarm_interrupt(alarm_t *a);
 
   /**
+   * Clears all alarm interrupts.
+   * To prevent an alarm going off at the wrong time (late),
+   * this should be called on startup/wake because the timer stops
+   * while device is asleep.
+   */
+  void clear_alarm_interrupts();
+
+  /**
    * Call this function immediately when an alarm is supposed to go off.
    * It should be attached to an esp_timer interrupt.
    * If Remigotchi is asleep when the alarm goes off, call this function (manually) after wakeup.
@@ -67,13 +89,14 @@ namespace alarms
   void alarm_callback(void *arg);
 
   /**
-   * Set the response field of an alarm to the given response.
+   * Only call this function when there is an alarm actively going off.
+   * Sets the response field of the current alarm.
    * Sets value returned by get_current_alarm back to NULL.
    *
    * Also sets up the interrupt for the next alarm to go off.
    * This is where a lot of the information change happens between alarms.
    */
-  void respond_to_alarm(alarm_t *a, Response r);
+  void respond_to_alarm(Response r);
 
   /**
    * Takes in a list of events, and creates a linked-list of alarms out of them.
@@ -86,6 +109,7 @@ namespace alarms
   /**
    * Frees memory allocated by event_list_to_alarm_list.
    * This frees both the alarm_list and alarm_t structs.
+   * Note, this does NOT free any of the event_t associated with the alarms.  That free needs to be made separately.
    * @param list Pointer to the head of the event list to free.
    */
   void free_alarm_list(alarm_list *list);

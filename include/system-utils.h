@@ -9,7 +9,11 @@
 
 #pragma once
 #include <SD.h>
-#include "ble-schedule.h"
+#include <nvs_flash.h>
+#include <nvs.h>
+#include <esp_sleep.h>
+#include <sys/time.h>
+#include <time.h>
 #include "gnss-time.h"
 
 #define BUTTON_1 14
@@ -80,15 +84,15 @@ namespace utils
      *
      * This function configures the ESP32's internal RTC timer to trigger a wake-up
      * from deep sleep at the specified time. If the provided time is earlier than
-     * the current time, the device will wake up at that time the next day.
+     * the current time, the device will not wake up at all.
      *
-     * @param wakeup_time A gnss_time::DateTime struct specifying the desired wake-up time.
-     *                    This is interpreted as a local time based on the system's current UTC offset.
+     * @param wakeup_time An integer representing a time of day (presumeably one after the time it gets called), in minutes after midnight.
+     * If the time listed does happen to be before the time of calling, a wakeup is not set.
      *
      * @note Call this before go_to_sleep() to enable timed wake-up.
      * @note The RTC should be kept reasonably accurate for reliable wake-up timing.
      */
-    void set_next_wakeup_time(const gnss_time::DateTime &wakeup_time);
+    void set_next_wakeup_time(uint16_t time);
 
     /**
      * Handles any state/variable changes needed before going to sleep, then puts Remigotchi into deep sleep.

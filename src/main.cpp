@@ -43,7 +43,7 @@ void print_schedule()
   {
     ble_schedule::event_t e;
     ble_schedule::get_event(i, &e);
-    Serial.printf("Event: %s\nPeriod: %d\nStart: %d\tEnd%d\n",
+    Serial.printf("Event: %s\nPeriod: %d\nStart: %d End %d\n",
                   e.name, e.period, e.start_time, e.end_time);
   }
 }

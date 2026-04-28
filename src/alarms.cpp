@@ -4,13 +4,135 @@
 
 namespace alarms
 {
-  alarm_t *current_alarm; // is NULL unless there is supposed to be an alarm firing right now
-  alarm_list *today;      // always points to the head of the alarm list
+  esp_timer_handle_t alarm;
 
-  void respond_to_alarm(alarm_t *a, Response r)
+  alarm_t *upcoming_alarm;                // always points to the alarm that is set up to go off next
+  alarm_t *current_alarm;                 // is NULL unless there is supposed to be an alarm firing right now
+  alarm_list *today_alarms;               // always points to the head of the alarm list
+  ble_schedule::event_list *today_events; // always points to the head of the event list
+
+  void init()
   {
-    a->r = r;
+    esp_timer_create_args_t timer_args = {
+        .callback = &alarm_callback,
+        .arg = NULL,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "remigotchi_alarm"};
+    esp_timer_create(&timer_args, &alarm);
+  }
+
+  void setup_day(uint8_t day)
+  {
+    // de-allocate current lists
+    free_alarm_list(today_alarms);
+    ble_schedule::free_event_list(today_events);
+
+    // get the specified day's lists
+    int num_events = 0;
+    today_events = ble_schedule::load_today_schedule(day, num_events);
+    today_alarms = event_list_to_alarm_list(today_events);
+  }
+
+  alarm_t *find_next_alarm()
+  {
+    // traverse today_alarms to find the next one after now
+    uint16_t now = gnss_time::get_minutes_after_midnight();
+    gnss_time::DateTime dt;
+    gnss_time::get_rtc_datetime(utils::configs::get_utc_offset(), &dt);
+    uint8_t day = dt.day_of_week;
+
+    alarm_list *al = today_alarms;
+
+    while (al != nullptr && al->next_a != nullptr)
+    {
+      if (al->curr_a->time >= now)
+      {
+        return al->curr_a;
+      }
+    }
+
+    // if we reach this point, either al = nullptr, or all the times in the list are before now.
+    // either way, we setup for tomorrow.
+    uint8_t tomorrow = (day % 7) + 1;
+    Serial.printf("No more alarms today.  Setting up day %d's alarms.\n", tomorrow);
+    setup_day(tomorrow);
+
+    // NOTE you could do recursion with a return find_next_alarm(); but for safety's sake, we'll return the first alarm on tomorrow's list
+    return today_alarms->curr_a;
+  }
+
+  alarm_t *get_upcoming_alarm()
+  {
+    return upcoming_alarm;
+  }
+
+  alarm_t *get_current_alarm()
+  {
+    return current_alarm;
+  }
+
+  void set_alarm_interrupt(alarm_t *a)
+  {
+    uint16_t now = gnss_time::get_minutes_after_midnight();
+    uint16_t minutes = a->time - now; // minutes from now until alarm
+    uint64_t microseconds = minutes * 6e7;
+    esp_timer_start_once(alarm, microseconds);
+  }
+
+  void clear_alarm_interrupts()
+  {
+    esp_timer_stop(alarm);
+  }
+
+  void alarm_callback(void *arg)
+  {
+    // TODO main state = NOTIF
+    // TODO notif state = ALARM
+
+    current_alarm = upcoming_alarm;
+  }
+
+  void respond_to_alarm(Response r)
+  {
+    if (current_alarm == NULL)
+    {
+      return;
+    }
+
+    File log_file = utils::sd_card::sd_open_file(ALARM_LOG_FILEPATH, FILE_APPEND);
+    if (!log_file)
+    {
+      Serial.println("Failed to open schedule file.");
+    }
+    else
+    {
+      gnss_time::DateTime dt;
+      gnss_time::get_rtc_datetime(utils::configs::get_utc_offset(), &dt);
+      log_file.printf("%02d/%02d/%04d %02d:%02d,%s", dt.day, dt.month, dt.year, dt.hour, dt.minute, current_alarm->e->name);
+      switch (r)
+      {
+      case Response::DONE:
+        log_file.println("DONE");
+        break;
+      case Response::IGNORE:
+        log_file.println("IGNORE");
+        break;
+      case Response::SNOOZE:
+        log_file.println("SNOOZE");
+        break;
+      default:
+        log_file.println("blank");
+        break;
+      }
+      log_file.close();
+    }
+
     current_alarm = NULL;
+
+    // TODO if r == SNOOZE, add in insert an alarm_t into today's list of alarms
+
+    upcoming_alarm = find_next_alarm();
+    set_alarm_interrupt(upcoming_alarm);
   }
 
   /**
@@ -82,7 +204,6 @@ namespace alarms
 
         alarm->time = event->start_time;
         alarm->e = event;
-        alarm->r = Response::NONE;
 
         alarm_head = _insert_alarm_sorted(alarm_head, alarm);
       }
@@ -100,7 +221,6 @@ namespace alarms
 
           alarm->time = current_time;
           alarm->e = event;
-          alarm->r = Response::NONE;
 
           alarm_head = _insert_alarm_sorted(alarm_head, alarm);
 
