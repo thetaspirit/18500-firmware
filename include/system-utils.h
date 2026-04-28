@@ -9,11 +9,14 @@
 
 #pragma once
 #include <SD.h>
+#include "ble-schedule.h"
+#include "gnss-time.h"
 
 #define BUTTON_1 14
 #define BUTTON_2 15
 #define BUTTON_3 16
 #define BUTTON_4 48
+#define DEBOUNCE 100
 
 #define BATT_MON 7
 
@@ -55,12 +58,56 @@ namespace utils
     int get_utc_offset(void);
 
   }
+  namespace sleep
+  {
+    /**
+     * Based on inactivity, returns whether or not device should sleep.
+     */
+    bool is_time_to_sleep(void);
+
+    /**
+     * Reset the sleep timer.
+     */
+    void reset_sleep_timer(void);
+
+    /**
+     * Put a specific amount of time on the clock before sleep.
+     */
+    void set_sleep_timer_ms(unsigned long ms);
+
+    /**
+     * @brief Sets the ESP32 to wake up at a specific time of day.
+     *
+     * This function configures the ESP32's internal RTC timer to trigger a wake-up
+     * from deep sleep at the specified time. If the provided time is earlier than
+     * the current time, the device will wake up at that time the next day.
+     *
+     * @param wakeup_time A gnss_time::DateTime struct specifying the desired wake-up time.
+     *                    This is interpreted as a local time based on the system's current UTC offset.
+     *
+     * @note Call this before go_to_sleep() to enable timed wake-up.
+     * @note The RTC should be kept reasonably accurate for reliable wake-up timing.
+     */
+    void set_next_wakeup_time(const gnss_time::DateTime &wakeup_time);
+
+    /**
+     * Handles any state/variable changes needed before going to sleep, then puts Remigotchi into deep sleep.
+     */
+    void go_to_sleep(void);
+  }
   namespace buttons
   {
     /**
      * Initializes buttons.
      */
     void init(void);
+
+    /**
+     * This function blocks its thread until the given button is released.
+     * Accounts for debouncing.
+     */
+    void wait_for_button_release(int pin_num);
+
   }
 
   namespace shared_spi

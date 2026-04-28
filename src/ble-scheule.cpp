@@ -284,8 +284,6 @@ namespace ble_schedule
 
   event_list *load_today_schedule(int day_of_week, int &num_events)
   {
-    // TODO needs to be tested after integration
-
     // Validate day_of_week is in valid range [1, 7]
     if (day_of_week < 1 || day_of_week > 7)
     {
