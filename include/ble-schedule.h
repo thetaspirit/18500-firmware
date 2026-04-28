@@ -42,8 +42,14 @@ namespace ble_schedule
         uint16_t start_time;
         uint16_t end_time;
         // 1 byte
-        uint8_t days_of_week;
-    } event_t; // 39 bytes total
+        uint8_t days_of_week; // 7 LSBs are used, beginning on Sunday for bit index 6
+    } event_t;                // 39 bytes total
+
+    struct event_list
+    {
+        event_t *curr_e;
+        event_list *next_e;
+    };
 
     typedef struct
     {
@@ -116,4 +122,20 @@ namespace ble_schedule
      * Undefined behavior if event_idx is outside the valid range.
      */
     void get_event(uint8_t event_idx, event_t *e);
+
+    /**
+     * Reads events from SD card, allocates memory and builds a linked-list of events occuring today.
+     * Caller must free the data returned!
+     * @param day_of_week Day of the week [1, 7]
+     * @param num_events variable to provide the number of events in the list, edited in place.
+     * @return A pointer to a linked-list of today's events.
+     */
+    event_list *load_today_schedule(int day_of_week, int &num_events);
+
+    /**
+     * Frees memory allocated by load_today_schedule.
+     * @param list Pointer to the head of the event list to free.
+     */
+    void free_event_list(event_list *list);
+
 }

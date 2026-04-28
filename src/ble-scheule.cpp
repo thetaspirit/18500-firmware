@@ -147,13 +147,13 @@ namespace ble_schedule
             Serial.println("Buffer is NULL.");
             return false;
         }
-        if (!utils::get_sd_status())
+        if (!utils::sd_card::get_sd_status())
         {
             Serial.println("Can't write to SD card.");
             return false;
         }
 
-        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_WRITE);
+        File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_WRITE);
         sched_file.write(buffer, buff_idx);
         sched_file.close();
         Serial.println("Data saved");
@@ -162,7 +162,7 @@ namespace ble_schedule
 
     char *get_schedule_name()
     {
-        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
         if (!sched_file)
         {
             Serial.println("Failed to open schedule file.");
@@ -175,6 +175,7 @@ namespace ble_schedule
         // Read 32 bytes of schedule name
         char name_buffer[32]; // 32 bytes + null terminator
         sched_file.read((uint8_t *)name_buffer, 32);
+        name_buffer[31] = '\0'; // manually set null terminator just for safety
 
         sched_file.close();
 
@@ -187,7 +188,7 @@ namespace ble_schedule
 
     uint8_t get_num_events()
     {
-        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
         if (!sched_file)
         {
             Serial.println("Failed to open schedule file.");
@@ -207,7 +208,7 @@ namespace ble_schedule
 
     uint8_t get_remi()
     {
-        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
         if (!sched_file)
         {
             Serial.println("Failed to open schedule file.");
@@ -227,7 +228,7 @@ namespace ble_schedule
 
     void get_event(uint8_t event_idx, event_t *e)
     {
-        File sched_file = utils::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
+        File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
         if (!sched_file)
         {
             Serial.println("Failed to open schedule file.");
@@ -266,6 +267,71 @@ namespace ble_schedule
         e->end_time = (e->end_time >> 8) | ((e->end_time & 0xFF) << 8);
 
         sched_file.close();
+    }
+
+    event_list *load_today_schedule(int day_of_week, int &num_events)
+    {
+        // TODO needs to be tested after integration
+
+        // Validate day_of_week is in valid range [1, 7]
+        if (day_of_week < 1 || day_of_week > 7)
+        {
+            num_events = 0;
+            return NULL;
+        }
+
+        // Get total number of events in schedule
+        uint8_t total_events = get_num_events();
+
+        // Initialize linked list
+        event_list *head = NULL;
+        event_list *tail = NULL;
+        num_events = 0;
+
+        // Iterate through all events
+        for (uint8_t i = 0; i < total_events; i++)
+        {
+            event_t event;
+            get_event(i, &event);
+
+            // Check if this event occurs on the requested day of week
+            // days_of_week has 7 LSBs: bit 6=Sunday(1), bit 5=Monday(2), ..., bit 0=Saturday(7)
+            uint8_t bit_position = 7 - day_of_week;
+            if (event.days_of_week & (1 << bit_position))
+            {
+                // Allocate memory for new event node
+                event_list *new_node = (event_list *)malloc(sizeof(event_list));
+                new_node->curr_e = (event_t *)malloc(sizeof(event_t));
+                *new_node->curr_e = event;
+                new_node->next_e = NULL;
+
+                // Add to linked list
+                if (head == NULL)
+                {
+                    head = new_node;
+                }
+                else
+                {
+                    tail->next_e = new_node;
+                }
+                tail = new_node;
+                num_events++;
+            }
+        }
+
+        return head;
+    }
+
+    void free_event_list(event_list *list)
+    {
+        event_list *current = list;
+        while (current != NULL)
+        {
+            event_list *next = current->next_e;
+            free(current->curr_e);
+            free(current);
+            current = next;
+        }
     }
 
 }
