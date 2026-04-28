@@ -13,40 +13,37 @@ void setup()
   utils::buttons::init();
 
   utils::configs::init();
+  utils::sd_card::init();
 
   while (!digitalRead(BUTTON_1))
   {
   }
 
-  // Test NVS settings implementation
-  Serial.printf("\n=== Testing NVS Settings Implementation ===\n");
+  // Test load_today_schedule function
+  Serial.println("Testing load_today_schedule:");
+  const char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
-  // Test sound setting
-  // utils::configs::set_sound(true);
-  bool sound = utils::configs::get_sound();
-  Serial.printf("Sound: %s\n", sound ? "enabled" : "disabled");
+  for (int day = 1; day <= 7; day++)
+  {
+    int num_events = 0;
+    ble_schedule::event_list *events = ble_schedule::load_today_schedule(day, num_events);
 
-  // Test vibration setting
-  // utils::configs::set_vibrate(true);
-  bool vibrate = utils::configs::get_vibrate();
-  Serial.printf("Vibration: %s\n", vibrate ? "enabled" : "disabled");
+    Serial.print(days[day - 1]);
+    Serial.print(" (");
+    Serial.print(num_events);
+    Serial.println(" events):");
 
-  // Test brightness setting
-  // utils::configs::set_brightness(2);
-  uint8_t brightness = utils::configs::get_brightness();
-  Serial.printf("Brightness: %d\n", brightness);
+    ble_schedule::event_list *curr = events;
+    while (curr != nullptr)
+    {
+      Serial.print("  - ");
+      Serial.println(curr->curr_e->name);
+      curr = curr->next_e;
+    }
 
-  // Test remi character setting
-  // utils::configs::set_remi(3);
-  uint8_t remi = utils::configs::get_remi();
-  Serial.printf("Remi Character: %d\n", remi);
-
-  // Test UTC offset setting
-  // utils::configs::set_utc_offset(-5);
-  int utc_offset = utils::configs::get_utc_offset();
-  Serial.printf("UTC Offset: %d\n", utc_offset);
-
-  Serial.printf("=== NVS Settings Test Complete ===\n\n");
+    ble_schedule::free_event_list(events);
+  }
+  Serial.println("load_today_schedule test complete!");
 }
 
 void loop()
