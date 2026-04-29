@@ -19,6 +19,10 @@ namespace alarms
         .dispatch_method = ESP_TIMER_TASK,
         .name = "remigotchi_alarm"};
     esp_timer_create(&timer_args, &alarm);
+
+    gnss_time::DateTime dt;
+    gnss_time::get_rtc_datetime(utils::configs::get_utc_offset(), &dt);
+    setup_day(dt.day_of_week);
   }
 
   void setup_day(uint8_t day)

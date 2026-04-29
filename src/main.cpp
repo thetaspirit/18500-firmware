@@ -48,27 +48,8 @@ void print_schedule()
   }
 }
 
-void setup()
+void print_monday_alarms()
 {
-  Serial.begin(115200);
-  Serial.println("Beginning.");
-  analogReadMilliVolts(BATT_MON);
-  utils::buttons::init();
-
-  utils::configs::init();
-  utils::shared_spi::init();
-  utils::sd_card::init();
-  rfid::init();
-
-  while (!digitalRead(BUTTON_1))
-  {
-  }
-  print_schedule();
-
-  while (!digitalRead(BUTTON_2))
-  {
-  }
-
   // Test event_list_to_alarm_list
   Serial.println("\nTesting event_list_to_alarm_list:");
   int num_events = 0;
@@ -122,6 +103,29 @@ void setup()
     Serial.println("No events found for Monday");
   }
   Serial.println("event_list_to_alarm_list test complete!\n");
+}
+
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println("Beginning.");
+  analogReadMilliVolts(BATT_MON);
+  utils::buttons::init();
+
+  utils::configs::init();
+  utils::shared_spi::init();
+  utils::sd_card::init();
+  rfid::init();
+  alarms::init();
+
+  while (!digitalRead(BUTTON_1))
+  {
+  }
+  print_schedule();
+
+  while (!digitalRead(BUTTON_2))
+  {
+  }
 }
 
 void loop()
