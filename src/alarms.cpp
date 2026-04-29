@@ -47,12 +47,13 @@ namespace alarms
 
     alarm_list *al = today_alarms;
 
-    while (al != nullptr && al->next_a != nullptr)
+    while (al != nullptr)
     {
       if (al->curr_a->time >= now)
       {
         return al->curr_a;
       }
+      al = al->next_a;
     }
 
     // if we reach this point, either al = nullptr, or all the times in the list are before now.
@@ -62,7 +63,11 @@ namespace alarms
     setup_day(tomorrow);
 
     // NOTE you could do recursion with a return find_next_alarm(); but for safety's sake, we'll return the first alarm on tomorrow's list
-    return today_alarms->curr_a;
+    if (today_alarms != nullptr)
+    {
+      return today_alarms->curr_a;
+    }
+    return nullptr;
   }
 
   alarm_t *get_upcoming_alarm()

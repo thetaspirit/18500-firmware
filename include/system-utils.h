@@ -42,6 +42,10 @@ namespace utils
 
     void init(void);
 
+    void toggle_sound(void);
+    void toggle_vibrate(void);
+    void toggle_brightness(void);
+
     void set_sound(bool sound);
     bool get_sound(void);
 

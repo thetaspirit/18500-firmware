@@ -228,6 +228,11 @@ namespace gnss_time
     return true;
   }
 
+  bool init()
+  {
+    return init(GNSS_TX, GNSS_RX, 1100);
+  }
+
   int estimate_utc_offset()
   {
     uint32_t horiz_acc = _gnss.getHorizontalAccuracy();

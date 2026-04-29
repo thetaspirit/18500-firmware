@@ -5,7 +5,7 @@ namespace ble_schedule
   uint8_t *buffer = NULL;
   int buff_idx = -1;
 
-  int events_expected = -1;
+  uint8_t events_expected = 99;
   uint8_t events_seen = 0;
   uint8_t events_received = 0;
   bool parse_error = false;
@@ -35,6 +35,15 @@ namespace ble_schedule
           Serial.printf("%02x ", buffer[buff_idx]);
 
           // ################### parsing logic ###################
+
+          // the first character sent should be the SCHEDULE_CHAR, if it's not, there's a parse error.
+          if (buff_idx == 0)
+          {
+            if (data != SCHEDULE_CHAR)
+            {
+              parse_error = true;
+            }
+          }
           // if this byte is the number of events, save it
           if (buff_idx == 33)
           {
@@ -94,10 +103,6 @@ namespace ble_schedule
     buffer = (uint8_t *)malloc(BUFFER_SIZE * sizeof(uint8_t));
     buff_idx = 0;
 
-    events_expected = -1;
-    events_seen = 0;
-    events_received = 0;
-
     Serial.println("--Ready--");
   }
 
@@ -113,16 +118,37 @@ namespace ble_schedule
     }
   }
 
+  void block_until_connected(unsigned int timeoutMillis)
+  {
+    if (!NuSerial.isConnected())
+    {
+      Serial.println("--Waiting for connection--");
+      if (NuSerial.connect(timeoutMillis)) // blocking check
+      {
+        Serial.println("--Connected--");
+      }
+    }
+  }
+
   uint8_t receive_schedule_data(void)
   {
     Serial.println("Ready to receive schedule.");
     int bytes_parsed = 0;
     unsigned long start_ms = millis();
 
+    events_expected = 99;
+    events_seen = 0;
+    events_received = 0;
+    parse_error = false;
+
     do
     {
       bytes_parsed += parse_bytes();
-    } while (parse_error == 0 && (events_expected > events_received || millis() - start_ms < SCHEDULE_RECEIVE_TIMEOUT_MS));
+    } while ((!parse_error) && (events_expected > events_received) && (millis() - start_ms < SCHEDULE_RECEIVE_TIMEOUT_MS));
+    /**
+     * Continue parsing bytes if:
+     * no parse errors AND there's more data to receive AND we haven't timed out
+     */
 
     if (parse_error)
     {
@@ -169,7 +195,7 @@ namespace ble_schedule
     File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_WRITE);
     sched_file.write(buffer, buff_idx);
     sched_file.close();
-    Serial.println("Data saved");
+    Serial.println("Schedule saved to SD card.");
     return true;
   }
 

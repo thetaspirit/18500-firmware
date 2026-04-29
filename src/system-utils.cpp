@@ -19,6 +19,11 @@ namespace utils
       }
     }
 
+    void toggle_sound()
+    {
+      return;
+    }
+
     void set_sound(bool sound)
     {
       nvs_handle_t handle;
@@ -44,6 +49,11 @@ namespace utils
       return (bool)value;
     }
 
+    void toggle_vibrate()
+    {
+      return;
+    }
+
     void set_vibrate(bool vib)
     {
       nvs_handle_t handle;
@@ -67,6 +77,11 @@ namespace utils
         nvs_close(handle);
       }
       return (bool)value;
+    }
+
+    void toggle_brightness()
+    {
+      return;
     }
 
     void set_brightness(uint8_t brightness)

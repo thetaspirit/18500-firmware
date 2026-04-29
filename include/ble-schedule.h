@@ -24,7 +24,7 @@
 #define BUFFER_SIZE 512
 
 /* The amount of milliseconds to wait for data after connecting to the desktop app. */
-#define SCHEDULE_RECEIVE_TIMEOUT_MS 10000
+#define SCHEDULE_RECEIVE_TIMEOUT_MS 30000
 
 #define SCHEDULE_CHAR 'S'
 #define EVENT_CHAR 'E'
@@ -66,8 +66,11 @@ namespace ble_schedule
   /**
    * Blocks until connection is acquired.
    * Will actually wait forever.
+   * This function is overloaded, so if you give it a parameter, it will timeout after
+   * the given number of milliseconds.
    */
   void block_until_connected(void);
+  void block_until_connected(unsigned int timeoutMillis);
 
   /**
    * Receives data from BLE and reads it into internal buffer.
@@ -90,7 +93,7 @@ namespace ble_schedule
   /**
    * Saves data in the internal buffer to the SD card.
    * (Data in buffer remains untouched).
-   * NOTE: Do NOT call this function before stop(), when the internal buffer gets de-allocated.
+   * NOTE: Do NOT call this function after stop(), when the internal buffer gets de-allocated.
    * @return False if SD card is missing or some other problem (like no buffer)
    */
   bool save_schedule_to_sd(void);

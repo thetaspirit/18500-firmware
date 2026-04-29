@@ -1,5 +1,8 @@
 #pragma once
-
+#include "system-utils.h"
+#include "ble-schedule.h"
+#include "gnss-time.h"
+#include "rfid-remis.h"
 namespace states
 {
   // Current state count is at a total of 22
@@ -16,18 +19,32 @@ namespace states
     SOUND,
     VIBRATION,
     BRIGHTNESS,
-    BLUETOOTH,
-    GNSS
+    BLUETOOTH_HIGHLIGHTED, // the bluetooth option on the menu is just highlighted, we are not in the bluetooth submenu
+    BLUETOOTH,             // we are in the bluetooth submenu (not in the main menu!)
+    GNSS_HIGHLIGHTED,      // the gps option on the menu is just highlighted, we are not in the gps submenu
+    GNSS                   // we are in the gps submenu (not in the main menu!)
+  };
+
+  enum class BluetoothState
+  {
+    READY,     // ready to begin connection (but not actively in pairing mode at that point)
+    WAITING,   // waiting for a connection
+    RECEIVING, // actively trying to receive data
+    DONE,      // just finished receiving data
+    TIMEOUT    // timed out because either never received a connection or received bad data
   };
 
   enum class GNSSstate
   {
+    TIME_HIGHLIGHTED,
     TIME,
+    TIMEZONE_HIGHLIGHTED,
     TIMEZONE
   };
 
   enum class TimeState
   {
+    READY,
     SYNC,
     TIMEOUT,
     DONE
@@ -35,6 +52,7 @@ namespace states
 
   enum class TimezoneState
   {
+    READY,
     SYNC,
     TIMEOUT,
     DONE
@@ -49,11 +67,16 @@ namespace states
     WRONG_RFID
   };
 
-  extern MainState main_state;
-  extern MenuState menu_state;
-  extern GNSSstate gnss_state;
-  extern TimeState time_state;
-  extern TimezoneState timezone_state;
-  extern NotifState notif_state;
+  void init(void);
+
+  void background_task(void *parameters);
+
+  MainState get_main(void);
+  MenuState get_menu(void);
+  BluetoothState get_bluetooth(void);
+  GNSSstate get_gnss(void);
+  TimeState get_time(void);
+  TimezoneState get_timezone(void);
+  NotifState get_notif(void);
 
 }

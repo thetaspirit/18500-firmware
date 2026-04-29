@@ -23,14 +23,17 @@
  */
 
 #pragma once
+#include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 #include "system-utils.h"
 
 #ifndef ESP32TIME_H
 #define ESP32TIME_H
 #endif
 
-#include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
-
+// the TX pin on the ESP32 that should connect to the GPS
+#define GNSS_TX 4
+// the RX pin on the ESP32 that should connect to the GPS
+#define GNSS_RX 5
 #define GPS_SERIAL Serial2
 #define GNSS_QUERY_TIMEOUT_MS 500
 #define UTC_OFFSET_UNAVAILABLE -99
@@ -72,6 +75,8 @@ namespace gnss_time
    * @return true if initalization was successful, false if not
    */
   bool init(int tx_pin, int rx_pin, uint16_t max_wait_time_ms);
+
+  bool init();
 
   // bool power_off(); // put GNSS to sleep to conserve power
   // bool wake_up();   // wakes up GNSS.  must be called before calling other functions if asleep
