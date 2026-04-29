@@ -2,13 +2,13 @@
 
 namespace states
 {
-  MainState main_state;
-  MenuState menu_state;
-  BluetoothState ble_state;
-  GNSSstate gnss_state;
-  TimeState time_state;
-  TimezoneState timezone_state;
-  NotifState notif_state;
+  volatile MainState main_state;
+  volatile MenuState menu_state;
+  volatile BluetoothState ble_state;
+  volatile GNSSstate gnss_state;
+  volatile TimeState time_state;
+  volatile TimezoneState timezone_state;
+  volatile NotifState notif_state;
 
   unsigned long BLE_CONNECT_TIMEOUT = 30000; // milliseconds
 
@@ -16,15 +16,15 @@ namespace states
    * These variables are true when a button has been CLICKED, and it needs to be
    * addressed.  Set these variables back to false after they've been addressed.
    */
-  bool button_1;
-  bool button_2;
-  bool button_3;
-  bool button_4;
+  volatile bool button_1;
+  volatile bool button_2;
+  volatile bool button_3;
+  volatile bool button_4;
 
-  bool button1_ignore_falling;
-  bool button2_ignore_falling;
-  bool button3_ignore_falling;
-  bool button4_ignore_falling;
+  volatile bool button1_ignore_falling;
+  volatile bool button2_ignore_falling;
+  volatile bool button3_ignore_falling;
+  volatile bool button4_ignore_falling;
   // Ignore the falling edge of the button when we call the long-click interrupt
 
   esp_timer_handle_t button1_timer;
@@ -47,7 +47,10 @@ namespace states
     button1_ignore_falling = true;
     _reset_states();
   }
-  void button2_callback(void *args) {}
+  void button2_callback(void *args)
+  {
+    alarms::alarm_callback(NULL);
+  }
   void button3_callback(void *args) {}
   void button4_callback(void *args) {}
 
@@ -128,11 +131,66 @@ namespace states
     }
   }
 
+  gnss_time::UpdateStatus gnss_sync_status;
   void _handle_time()
   {
+    switch (time_state)
+    {
+    case TimeState::SYNC:
+      gnss_sync_status = gnss_time::update_gnss_datetime();
+      if (gnss_sync_status == gnss_time::UpdateStatus::UPDATED_BOTH)
+      {
+        time_state = TimeState::DONE;
+      }
+      else
+      {
+        DEBUG_PRINTLN("Unable to get date or time.");
+        time_state = TimeState::TIMEOUT;
+      }
+      break;
+    case TimeState::DONE:
+      if (button_1)
+      {
+        clear_buttons();
+        time_state = TimeState::SYNC;
+        gnss_state = GNSSstate::TIME_HIGHLIGHTED;
+        DEBUG_PRINTLN("Showing gps submenu -> time.");
+      }
+      break;
+    case TimeState::TIMEOUT:
+      if (button_1)
+      {
+        clear_buttons();
+        time_state = TimeState::SYNC;
+        gnss_state = GNSSstate::TIME_HIGHLIGHTED;
+        DEBUG_PRINTLN("Showing gps submenu -> time.");
+      }
+      else if (button_3)
+      {
+        // trying again
+        time_state = TimeState::SYNC;
+      }
+      break;
+    default:
+      break;
+    }
   }
 
-  void _handle_timezone() {}
+  void _handle_timezone()
+  {
+    switch (timezone_state)
+    {
+    case TimezoneState::DONE:
+      // TODO button controlls to inc/dec offset, go back, auto-detect
+      break;
+    case TimezoneState::SYNC:
+      break;
+    case TimezoneState::TIMEOUT:
+      break;
+    default:
+      break;
+    }
+  }
 
   /**
    * Handles all the stuff for when we are in the gps SUBMENU
@@ -146,13 +204,13 @@ namespace states
       {
         clear_buttons();
         gnss_state = GNSSstate::TIMEZONE_HIGHLIGHTED;
-        Serial.println("Showing gps submenu -> timezone.");
+        DEBUG_PRINTLN("Showing gps submenu -> timezone.");
       }
       else if (button_2)
       {
         clear_buttons();
         gnss_state = GNSSstate::TIME;
-        Serial.println("Entering gps->time sub-submenu.");
+        DEBUG_PRINTLN("Entering gps->time sub-submenu.");
       }
       break;
     case GNSSstate::TIMEZONE_HIGHLIGHTED:
@@ -160,13 +218,13 @@ namespace states
       {
         clear_buttons();
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
-        Serial.println("Showing gps submenu -> time.");
+        DEBUG_PRINTLN("Showing gps submenu -> time.");
       }
       else if (button_2)
       {
         clear_buttons();
         gnss_state = GNSSstate::TIMEZONE;
-        Serial.println("Entering gps->timezone sub-submenu.");
+        DEBUG_PRINTLN("Entering gps->timezone sub-submenu.");
       }
       break;
     case GNSSstate::TIME:
@@ -197,13 +255,13 @@ namespace states
       {
         ble_state = BluetoothState::TIMEOUT;
         ble_schedule::stop();
-        Serial.println("Bluetooth timed out.");
+        DEBUG_PRINTLN("Bluetooth timed out.");
       }
       else
       {
         ble_state = BluetoothState::RECEIVING;
         ble_receive_status = ble_schedule::receive_schedule_data();
-        Serial.println("Function receive_schedule_data ended.");
+        DEBUG_PRINTLN("Function receive_schedule_data ended.");
       }
       break;
     case BluetoothState::RECEIVING:
@@ -212,13 +270,13 @@ namespace states
       // after that function returns.
       if (ble_receive_status == 0)
       {
-        Serial.println("Schedule received successfully.");
+        DEBUG_PRINTLN("Schedule received successfully.");
         ble_schedule::save_schedule_to_sd(); // TODO add safety checks to this ig
         ble_state = BluetoothState::DONE;
       }
       else
       {
-        Serial.println("There was a problem receiving the schedule.");
+        DEBUG_PRINTLN("There was a problem receiving the schedule.");
         ble_state = BluetoothState::TIMEOUT;
       }
       ble_schedule::stop();
@@ -238,7 +296,7 @@ namespace states
         clear_buttons();
         // set state back to READY before leaving!
         ble_state = BluetoothState::READY;
-        Serial.println("Showing menu -> bluetooth");
+        DEBUG_PRINTLN("Showing menu -> bluetooth");
         menu_state = MenuState::BLUETOOTH_HIGHLIGHTED;
       }
       else if (button_3)
@@ -271,13 +329,13 @@ namespace states
       {
         clear_buttons();
         menu_state = MenuState::BRIGHTNESS;
-        Serial.println("Showing menu -> brightness.");
+        DEBUG_PRINTLN("Showing menu -> brightness.");
       }
       else if (button_3)
       {
         clear_buttons();
         menu_state = MenuState::VIBRATION;
-        Serial.println("Showing menu -> vibrate.");
+        DEBUG_PRINTLN("Showing menu -> vibrate.");
       }
       break;
     case MenuState::VIBRATION:
@@ -290,13 +348,13 @@ namespace states
       {
         clear_buttons();
         menu_state = MenuState::SOUND;
-        Serial.println("Showing menu -> sound.");
+        DEBUG_PRINTLN("Showing menu -> sound.");
       }
       else if (button_3)
       {
         clear_buttons();
         menu_state = MenuState::BLUETOOTH_HIGHLIGHTED;
-        Serial.println("Showing menu -> bluetooth.");
+        DEBUG_PRINTLN("Showing menu -> bluetooth.");
       }
       break;
     case MenuState::BRIGHTNESS:
@@ -309,13 +367,13 @@ namespace states
       {
         clear_buttons();
         menu_state = MenuState::GNSS_HIGHLIGHTED;
-        Serial.println("Showing menu -> GPS.");
+        DEBUG_PRINTLN("Showing menu -> GPS.");
       }
       else if (button_3)
       {
         clear_buttons();
         menu_state = MenuState::SOUND;
-        Serial.println("Showing menu -> sound.");
+        DEBUG_PRINTLN("Showing menu -> sound.");
       }
       break;
     case MenuState::BLUETOOTH_HIGHLIGHTED:
@@ -325,7 +383,7 @@ namespace states
         if (ble_state == BluetoothState::READY)
         {
           menu_state = MenuState::BLUETOOTH;
-          Serial.println("Entering bluetooth submenu.");
+          DEBUG_PRINTLN("Entering bluetooth submenu.");
           ble_schedule::start();
           ble_state = BluetoothState::WAITING;
           ble_schedule::block_until_connected(BLE_CONNECT_TIMEOUT);
@@ -335,13 +393,13 @@ namespace states
       {
         clear_buttons();
         menu_state = MenuState::VIBRATION;
-        Serial.println("Showing menu -> vibrate.");
+        DEBUG_PRINTLN("Showing menu -> vibrate.");
       }
       else if (button_3)
       {
         clear_buttons();
         menu_state = MenuState::GNSS_HIGHLIGHTED;
-        Serial.println("Showing menu -> GPS.");
+        DEBUG_PRINTLN("Showing menu -> GPS.");
       }
       break;
     case MenuState::BLUETOOTH:
@@ -354,19 +412,19 @@ namespace states
         // Enter the gps submenu
         menu_state = MenuState::GNSS;
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
-        Serial.println("Entering gps submenu.");
+        DEBUG_PRINTLN("Entering gps submenu.");
       }
       else if (button_1)
       {
         clear_buttons();
         menu_state = MenuState::BLUETOOTH_HIGHLIGHTED;
-        Serial.println("Showing menu -> bluetooth.");
+        DEBUG_PRINTLN("Showing menu -> bluetooth.");
       }
       else if (button_3)
       {
         clear_buttons();
         menu_state = MenuState::BRIGHTNESS;
-        Serial.println("Showing menu -> brightness.");
+        DEBUG_PRINTLN("Showing menu -> brightness.");
       }
       break;
     case MenuState::GNSS:
@@ -443,13 +501,13 @@ namespace states
         if (button_1)
         {
           clear_buttons();
-          Serial.println("Entering the menu.");
+          DEBUG_PRINTLN("Entering the menu.");
           main_state = MainState::MENU;
         }
         else if (button_2)
         {
           clear_buttons();
-          Serial.println("Entering the today.");
+          DEBUG_PRINTLN("Entering the today.");
           main_state = MainState::TODAY;
         }
         break;
@@ -460,11 +518,12 @@ namespace states
         if (button_1)
         {
           clear_buttons();
-          Serial.println("Going back home.");
+          DEBUG_PRINTLN("Going back home.");
           main_state = MainState::HOME;
         }
         break;
       case MainState::NOTIF:
+        digitalWrite(RED, HIGH);
         _handle_notif();
         break;
       default:
@@ -472,6 +531,13 @@ namespace states
       }
       vTaskDelay(pdMS_TO_TICKS(50));
     }
+  }
+
+  void set_alarm_state()
+  {
+    _reset_states();
+    main_state = MainState::NOTIF;
+    notif_state = NotifState::ALARM;
   }
 
   MainState get_main()

@@ -311,6 +311,8 @@ namespace gnss_time
       utc_datetime.day = _gnss.getDay();
       utc_datetime.day_of_week = _calculateDayOfWeek(utc_datetime.year % 100, utc_datetime.month, utc_datetime.day);
 
+      Serial.printf("Date is %02d/%02d/%d\n", utc_datetime.day, utc_datetime.month, utc_datetime.year);
+
       s = UPDATED_DATE_ONLY;
     }
 
@@ -320,6 +322,8 @@ namespace gnss_time
       utc_datetime.hour = _gnss.getHour();
       utc_datetime.minute = _gnss.getMinute();
       utc_datetime.second = _gnss.getSecond();
+
+      Serial.printf("Time is %02d:%02d:%02d\n", utc_datetime.hour, utc_datetime.minute, utc_datetime.second);
 
       if (s == UPDATED_DATE_ONLY)
       {

@@ -79,6 +79,8 @@ namespace utils
      */
     uint8_t get_emotion(void);
 
+    void increment_utc_offset(void);
+    void decrement_utc_offset(void);
     void set_utc_offset(int offset);
     int get_utc_offset(void);
 

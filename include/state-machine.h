@@ -3,6 +3,31 @@
 #include "ble-schedule.h"
 #include "gnss-time.h"
 #include "rfid-remis.h"
+#include "alarms.h"
+
+#define DEBUG
+#ifdef DEBUG
+#define DEBUG_PRINTF(...)       \
+  do                            \
+  {                             \
+    Serial.printf(__VA_ARGS__); \
+  } while (0)
+#define DEBUG_PRINTLN(...)       \
+  do                             \
+  {                              \
+    Serial.println(__VA_ARGS__); \
+  } while (0)
+#else
+#define DEBUG_PRINTF(...) \
+  do                      \
+  {                       \
+  } while (0)
+#define DEBUG_PRINTLN \
+  do                  \
+  {                   \
+  } while (0)
+#endif
+
 namespace states
 {
   // Current state count is at a total of 22
@@ -52,7 +77,7 @@ namespace states
 
   enum class TimezoneState
   {
-    READY,
+    // READY,
     SYNC,
     TIMEOUT,
     DONE
@@ -70,6 +95,11 @@ namespace states
   void init(void);
 
   void background_task(void *parameters);
+
+  /**
+   * Call this function when it's time to show an alarm!
+   */
+  void set_alarm_state();
 
   MainState get_main(void);
   MenuState get_menu(void);

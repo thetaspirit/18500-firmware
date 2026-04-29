@@ -286,6 +286,24 @@ namespace utils
       return _emotion;
     }
 
+    void increment_utc_offset()
+    {
+      _utc_offset++;
+      if (_utc_offset > 12)
+      {
+        _utc_offset = 12;
+      }
+    }
+
+    void decrement_utc_offset()
+    {
+      _utc_offset--;
+      if (_utc_offset < -12)
+      {
+        _utc_offset = -12;
+      }
+    }
+
     void set_utc_offset(int utc)
     {
       _utc_offset = utc;

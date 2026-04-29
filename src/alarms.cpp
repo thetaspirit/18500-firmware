@@ -1,5 +1,6 @@
 
 #include "alarms.h"
+#include "state-machine.h"
 #include <cstring>
 
 namespace alarms
@@ -95,8 +96,7 @@ namespace alarms
 
   void alarm_callback(void *arg)
   {
-    // TODO main state = NOTIF
-    // TODO notif state = ALARM
+    states::set_alarm_state();
 
     current_alarm = upcoming_alarm;
   }
