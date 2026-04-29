@@ -131,6 +131,12 @@ void setup()
   Serial.println("Beginning.");
   analogReadMilliVolts(BATT_MON);
   utils::buttons::init();
+  pinMode(RED, OUTPUT);
+  pinMode(YELLOW, OUTPUT);
+  pinMode(GREEN, OUTPUT);
+  digitalWrite(RED, LOW);
+  digitalWrite(YELLOW, LOW);
+  digitalWrite(GREEN, LOW);
 
   utils::configs::init();
   utils::shared_spi::init();

@@ -44,7 +44,7 @@ namespace states
 
   enum class TimeState
   {
-    READY,
+    // READY,
     SYNC,
     TIMEOUT,
     DONE
