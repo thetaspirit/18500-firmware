@@ -13,9 +13,15 @@ namespace rfid
   bool init(void);
 
   /**
-   * @return UID of the card detected.  0 = no card found, or there was some other problem.
+   * Calls read_uid until it gets something that isn't 0.
+   * This function is blocking!
    */
   uint32_t get_uid(void);
+
+  /**
+   * @return UID of the card detected.  0 = no card found, or there was some other problem.
+   */
+  uint32_t read_uid(void);
 
   void print_uid(void);
 }

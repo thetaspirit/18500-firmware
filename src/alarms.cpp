@@ -24,6 +24,7 @@ namespace alarms
     gnss_time::DateTime dt;
     gnss_time::get_rtc_datetime(utils::configs::get_utc_offset(), &dt);
     setup_day(dt.day_of_week);
+    upcoming_alarm = find_next_alarm();
   }
 
   void setup_day(uint8_t day)
@@ -96,9 +97,8 @@ namespace alarms
 
   void alarm_callback(void *arg)
   {
-    states::set_alarm_state();
-
     current_alarm = upcoming_alarm;
+    states::set_alarm_state();
   }
 
   void respond_to_alarm(Response r)
@@ -117,7 +117,7 @@ namespace alarms
     {
       gnss_time::DateTime dt;
       gnss_time::get_rtc_datetime(utils::configs::get_utc_offset(), &dt);
-      log_file.printf("%02d/%02d/%04d %02d:%02d,%s", dt.day, dt.month, dt.year, dt.hour, dt.minute, current_alarm->e->name);
+      log_file.printf("%02d/%02d/%04d %02d:%02d,%s,", dt.day, dt.month, dt.year, dt.hour, dt.minute, current_alarm->e->name);
       switch (r)
       {
       case Response::DONE:

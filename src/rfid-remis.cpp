@@ -21,6 +21,18 @@ namespace rfid
 
   uint32_t get_uid()
   {
+    uint32_t uid;
+    do
+    {
+      uid = read_uid();
+      vTaskDelay(pdMS_TO_TICKS(10));
+    } while (uid == 0);
+
+    return uid;
+  }
+
+  uint32_t read_uid()
+  {
     byte bufferATQA[2];
     byte bufferSize = sizeof(bufferATQA);
 
