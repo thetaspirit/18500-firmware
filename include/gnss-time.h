@@ -25,6 +25,7 @@
 #pragma once
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 #include "system-utils.h"
+#include "debug.h"
 
 #ifndef ESP32TIME_H
 #define ESP32TIME_H
@@ -84,12 +85,14 @@ namespace gnss_time
   /**
    * @brief Uses position and date to estimate the UTC timezone offset.
    * Also takes into account rudamentary daylight savings time rules.
+   * This function is blocking.
    * @return an hour offset from UTC.  returns UTC_OFFSET_UNAVAILABLE if it cannot get a GNSS fix.
    */
   int estimate_utc_offset();
 
   /**
    * @brief Attempts to retrieve the current date and time from GNSS and store that into the RTC.
+   * This function is blocking.
    * @return Status indicating what it was or was not able to acquire.
    */
   UpdateStatus update_gnss_datetime();

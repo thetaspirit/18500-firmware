@@ -15,6 +15,11 @@
 #include <sys/time.h>
 #include <time.h>
 #include "gnss-time.h"
+#include "debug.h"
+
+#define RED 35
+#define YELLOW 36
+#define GREEN 37
 
 #define BUTTON_1 14
 #define BUTTON_2 15
@@ -53,17 +58,39 @@ namespace utils
     bool get_vibrate(void);
 
     /**
-     * Value is a 2 for high or 1 for low.
+     * 2 = high (very bright), 1 = low (less bright)
      * All other numbers are invalid.
      */
     void set_brightness(uint8_t brightness);
+    /**
+     * 2 = high (very bright), 1 = low (less bright)
+     * All other numbers are invalid.
+     */
     uint8_t get_brightness(void);
 
     void set_remi(uint8_t remi);
     uint8_t get_remi(void);
 
+    /**
+     * 2 = happy/idle, 1 = sad
+     */
+    void set_emotion(uint8_t emotion);
+    /**
+     * 2 = happy/idle, 1 = sad
+     */
+    uint8_t get_emotion(void);
+
+    void increment_utc_offset(void);
+    void decrement_utc_offset(void);
     void set_utc_offset(int offset);
     int get_utc_offset(void);
+
+    /**
+     * Saves all of the variables at their current states to memory.
+     * Call this function before sleeping.
+     * Also call this function somewhat periodically so that if Remigotchi spontaneously dies, maybe the data won't be lost.
+     */
+    void write_values_to_memory(void);
 
   }
   namespace sleep

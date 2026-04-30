@@ -32,7 +32,7 @@ namespace ble_schedule
         {
           // save it to buffer
           buffer[buff_idx] = (uint8_t)data;
-          Serial.printf("%02x ", buffer[buff_idx]);
+          DEBUG_PRINTF("%02x ", buffer[buff_idx]);
 
           // ################### parsing logic ###################
 
@@ -48,7 +48,7 @@ namespace ble_schedule
           if (buff_idx == 33)
           {
             events_expected = (int)data;
-            Serial.printf("\n--Expecting to receive %d events.--\n", events_expected);
+            DEBUG_PRINTF("\n--Expecting to receive %d events.--\n", events_expected);
           }
           // looking for EVENT_CHAR bytes
           if (buff_idx % 40 == 35)
@@ -56,7 +56,7 @@ namespace ble_schedule
             if (data == EVENT_CHAR)
             {
               events_seen++;
-              Serial.printf("\n--Beginning event number %d.--\n", events_seen);
+              DEBUG_PRINTF("\n--Beginning event number %d.--\n", events_seen);
             }
             else
             {
@@ -67,7 +67,7 @@ namespace ble_schedule
           if (buff_idx % 40 == 34 && events_seen > 0)
           {
             events_received++;
-            Serial.printf("\n--Received event number %d.--\n", events_received);
+            DEBUG_PRINTF("\n--Received event number %d.--\n", events_received);
           }
 
           // increment counters
@@ -91,7 +91,7 @@ namespace ble_schedule
 
   void start()
   {
-    Serial.println("--Initializing--");
+    DEBUG_PRINTLN("--Initializing--");
 
     // Initialize BLE stack and Nordic UART service
     NimBLEDevice::init(DEVICE_NAME);
@@ -103,17 +103,17 @@ namespace ble_schedule
     buffer = (uint8_t *)malloc(BUFFER_SIZE * sizeof(uint8_t));
     buff_idx = 0;
 
-    Serial.println("--Ready--");
+    DEBUG_PRINTLN("--Ready--");
   }
 
   void block_until_connected()
   {
     if (!NuSerial.isConnected())
     {
-      Serial.println("--Waiting for connection--");
+      DEBUG_PRINTLN("--Waiting for connection--");
       if (NuSerial.connect()) // blocking check
       {
-        Serial.println("--Connected--");
+        DEBUG_PRINTLN("--Connected--");
       }
     }
   }
@@ -122,17 +122,17 @@ namespace ble_schedule
   {
     if (!NuSerial.isConnected())
     {
-      Serial.println("--Waiting for connection--");
+      DEBUG_PRINTLN("--Waiting for connection--");
       if (NuSerial.connect(timeoutMillis)) // blocking check
       {
-        Serial.println("--Connected--");
+        DEBUG_PRINTLN("--Connected--");
       }
     }
   }
 
   uint8_t receive_schedule_data(void)
   {
-    Serial.println("Ready to receive schedule.");
+    DEBUG_PRINTLN("Ready to receive schedule.");
     int bytes_parsed = 0;
     unsigned long start_ms = millis();
 
@@ -152,23 +152,23 @@ namespace ble_schedule
 
     if (parse_error)
     {
-      Serial.println("Parse error.");
+      DEBUG_PRINTLN("Parse error.");
       return 2;
     }
     if (bytes_parsed == 0)
     {
-      Serial.println("Timeout.");
+      DEBUG_PRINTLN("Timeout.");
       return 1;
     }
 
-    Serial.println("Schedule receive complete.");
+    DEBUG_PRINTLN("Schedule receive complete.");
     return 0;
   }
 
   void stop()
   {
     NuSerial.stop();
-    Serial.println("--Stopped--");
+    DEBUG_PRINTLN("--Stopped--");
     free(buffer);
     buffer = NULL;
     buff_idx = -1;
@@ -183,19 +183,19 @@ namespace ble_schedule
   {
     if (buffer == NULL || buff_idx == -1)
     {
-      Serial.println("Buffer is NULL.");
+      DEBUG_PRINTLN("Buffer is NULL.");
       return false;
     }
     if (!utils::sd_card::get_sd_status())
     {
-      Serial.println("Can't write to SD card.");
+      DEBUG_PRINTLN("Can't write to SD card.");
       return false;
     }
 
     File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_WRITE);
     sched_file.write(buffer, buff_idx);
     sched_file.close();
-    Serial.println("Schedule saved to SD card.");
+    DEBUG_PRINTLN("Schedule saved to SD card.");
     return true;
   }
 
@@ -204,7 +204,7 @@ namespace ble_schedule
     File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
     if (!sched_file)
     {
-      Serial.println("Failed to open schedule file.");
+      DEBUG_PRINTLN("Failed to open schedule file.");
       return NULL;
     }
 
@@ -230,7 +230,7 @@ namespace ble_schedule
     File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
     if (!sched_file)
     {
-      Serial.println("Failed to open schedule file.");
+      DEBUG_PRINTLN("Failed to open schedule file.");
       return 0;
     }
 
@@ -250,7 +250,7 @@ namespace ble_schedule
     File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
     if (!sched_file)
     {
-      Serial.println("Failed to open schedule file.");
+      DEBUG_PRINTLN("Failed to open schedule file.");
       return 0;
     }
 
@@ -270,7 +270,7 @@ namespace ble_schedule
     File sched_file = utils::sd_card::sd_open_file(SCHEDULE_SD_FILEPATH, FILE_READ);
     if (!sched_file)
     {
-      Serial.println("Failed to open schedule file.");
+      DEBUG_PRINTLN("Failed to open schedule file.");
       return;
     }
 
@@ -281,7 +281,7 @@ namespace ble_schedule
     // Check if event_idx is within bounds
     if (event_idx >= num_events)
     {
-      Serial.println("Event index out of range.");
+      DEBUG_PRINTLN("Event index out of range.");
       sched_file.close();
       return;
     }

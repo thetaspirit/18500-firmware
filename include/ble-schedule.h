@@ -17,6 +17,7 @@
 #include <NimBLEDevice.h>
 #include "NuSerial.hpp"
 #include "system-utils.h"
+#include "debug.h"
 
 #define DEVICE_NAME "Remigotchi 18500"
 

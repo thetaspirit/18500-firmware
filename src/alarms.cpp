@@ -1,5 +1,6 @@
 
 #include "alarms.h"
+#include "state-machine.h"
 #include <cstring>
 
 namespace alarms
@@ -59,7 +60,7 @@ namespace alarms
     // if we reach this point, either al = nullptr, or all the times in the list are before now.
     // either way, we setup for tomorrow.
     uint8_t tomorrow = (day % 7) + 1;
-    Serial.printf("No more alarms today.  Setting up day %d's alarms.\n", tomorrow);
+    DEBUG_PRINTF("No more alarms today.  Setting up day %d's alarms.\n", tomorrow);
     setup_day(tomorrow);
 
     // NOTE you could do recursion with a return find_next_alarm(); but for safety's sake, we'll return the first alarm on tomorrow's list
@@ -95,8 +96,7 @@ namespace alarms
 
   void alarm_callback(void *arg)
   {
-    // TODO main state = NOTIF
-    // TODO notif state = ALARM
+    states::set_alarm_state();
 
     current_alarm = upcoming_alarm;
   }
@@ -111,7 +111,7 @@ namespace alarms
     File log_file = utils::sd_card::sd_open_file(ALARM_LOG_FILEPATH, FILE_APPEND);
     if (!log_file)
     {
-      Serial.println("Failed to open schedule file.");
+      DEBUG_PRINTLN("Failed to open schedule file.");
     }
     else
     {

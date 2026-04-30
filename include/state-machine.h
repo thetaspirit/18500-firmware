@@ -3,6 +3,9 @@
 #include "ble-schedule.h"
 #include "gnss-time.h"
 #include "rfid-remis.h"
+#include "alarms.h"
+#include "debug.h"
+
 namespace states
 {
   // Current state count is at a total of 22
@@ -44,7 +47,7 @@ namespace states
 
   enum class TimeState
   {
-    READY,
+    // READY,
     SYNC,
     TIMEOUT,
     DONE
@@ -52,9 +55,9 @@ namespace states
 
   enum class TimezoneState
   {
-    READY,
+    // READY,
     SYNC,
-    TIMEOUT,
+    // TIMEOUT,
     DONE
   };
 
@@ -70,6 +73,11 @@ namespace states
   void init(void);
 
   void background_task(void *parameters);
+
+  /**
+   * Call this function when it's time to show an alarm!
+   */
+  void set_alarm_state();
 
   MainState get_main(void);
   MenuState get_menu(void);
