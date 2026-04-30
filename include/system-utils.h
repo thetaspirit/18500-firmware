@@ -74,13 +74,21 @@ namespace utils
     uint8_t get_remi(void);
 
     /**
-     * 2 = happy/idle, 1 = sad
+     * Cycles health value through various values
      */
-    void set_emotion(uint8_t emotion);
+    void cycle_health();
+
     /**
-     * 2 = happy/idle, 1 = sad
+     * Health level, [0, 14].
+     * 0 = no health (sad), 14 = full health (happy)
      */
-    uint8_t get_emotion(void);
+    void set_health(uint8_t health);
+
+    /**
+     * Health level, [0, 14].
+     * 0 = no health (sad), 14 = full health (happy)
+     */
+    uint8_t get_health(void);
 
     void increment_utc_offset(void);
     void decrement_utc_offset(void);

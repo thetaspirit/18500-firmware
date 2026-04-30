@@ -44,18 +44,23 @@ namespace states
   }
 
   void button1_callback(void *args)
-  {
+  { // universal go-to-home
     button1_ignore_falling = true;
     _reset_states();
   }
   void button2_callback(void *args)
-  {
+  { // Manually cause what happens when the countdown timer goes off
     button2_ignore_falling = true;
-    // Artificially cause what happens when the countdown timer goes off
     alarms::alarm_callback(NULL);
   }
-  void button3_callback(void *args) {}
-  void button4_callback(void *args) {}
+  void button3_callback(void *args)
+  { // Manually modify the health bar
+    button3_ignore_falling = true;
+    utils::configs::cycle_health();
+  }
+  void button4_callback(void *args)
+  { // Manually put device to sleep
+    }
 
   void IRAM_ATTR button1_isr()
   {

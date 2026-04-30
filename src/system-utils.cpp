@@ -13,7 +13,7 @@ namespace utils
     uint8_t _brightness;
     int _utc_offset;
     uint8_t _remi;
-    uint8_t _emotion;
+    uint8_t _health;
     bool values_loaded = false;
 
     void reset_values()
@@ -23,6 +23,7 @@ namespace utils
       _brightness = 2;
       _utc_offset = -4;
       _remi = 1;
+      _health = 14;
       values_loaded = true;
     }
 
@@ -126,26 +127,26 @@ namespace utils
       return value;
     }
 
-    void write_emotion_to_mem(uint8_t emotion)
+    void write_health_to_mem(uint8_t health)
     {
       nvs_handle_t handle;
       esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &handle);
       if (err == ESP_OK)
       {
-        nvs_set_u8(handle, "emotion", emotion);
+        nvs_set_u8(handle, "health", health);
         nvs_commit(handle);
         nvs_close(handle);
       }
     }
 
-    uint8_t get_emotion_from_mem(void)
+    uint8_t get_health_from_mem(void)
     {
       nvs_handle_t handle;
       uint8_t value = 0; // Default remi character
       esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &handle);
       if (err == ESP_OK)
       {
-        nvs_get_u8(handle, "emotion", &value);
+        nvs_get_u8(handle, "health", &value);
         nvs_close(handle);
       }
       return value;
@@ -183,7 +184,7 @@ namespace utils
       _brightness = get_brightness_from_mem();
       _utc_offset = get_utc_offset_from_mem();
       _remi = get_remi_from_mem();
-      _emotion = get_emotion_from_mem();
+      _health = get_health_from_mem();
 
       values_loaded = true;
     }
@@ -195,7 +196,7 @@ namespace utils
       write_brightness_to_mem(_brightness);
       write_utc_offset_to_mem(_utc_offset);
       write_remi_to_mem(_remi);
-      write_emotion_to_mem(_emotion);
+      write_health_to_mem(_health);
     }
 
     void init()
@@ -276,14 +277,20 @@ namespace utils
       return _remi;
     }
 
-    void set_emotion(uint8_t emotion)
+    void cycle_health()
     {
-      _emotion = emotion;
+      _health -= 4;
+      _health %= 15;
     }
 
-    uint8_t get_emotion()
+    void set_health(uint8_t health)
     {
-      return _emotion;
+      _health = health;
+    }
+
+    uint8_t get_health()
+    {
+      return _health;
     }
 
     void increment_utc_offset()
@@ -332,6 +339,8 @@ namespace utils
       uint64_t microseconds = minutes * 6e7;
       esp_sleep_enable_timer_wakeup(microseconds);
     }
+
+    void trigger_sleep() {}
 
     void go_to_sleep()
     {
