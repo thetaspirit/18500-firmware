@@ -2,7 +2,6 @@
 #pragma once
 #include "ble-schedule.h"
 #include "esp_timer.h"
-#include "rfid-remis.h"
 #include "gnss-time.h"
 #include "system-utils.h"
 #include "debug.h"
@@ -90,11 +89,12 @@ namespace alarms
   void alarm_callback(void *arg);
 
   /**
-   * Only call this function when there is an alarm actively going off.
-   * Sets the response field of the current alarm.
-   * Sets value returned by get_current_alarm back to NULL.
+   * Only call this function when there is an alarm actively going off, and it is time to turn the alarm off.
+   * This function the response field of the alarm currently going off.
+   * Sets current_alarm back to NULL.
    *
-   * Also sets up the interrupt for the next alarm to go off.
+   * Also sets up the interrupt for the next alarm to go off, and finds the next alarm to update
+   * upcoming_alarm.
    * This is where a lot of the information change happens between alarms.
    */
   void respond_to_alarm(Response r);

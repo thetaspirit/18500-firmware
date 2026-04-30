@@ -34,12 +34,19 @@ void setup()
   DEBUG_PRINTLN("Beginning.");
   analogReadMilliVolts(BATT_MON);
   utils::buttons::init();
+
   pinMode(RED, OUTPUT);
   pinMode(YELLOW, OUTPUT);
   pinMode(GREEN, OUTPUT);
   digitalWrite(RED, LOW);
   digitalWrite(YELLOW, LOW);
   digitalWrite(GREEN, LOW);
+
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, HIGH);
+
+  pinMode(MOTOR, OUTPUT);
+  digitalWrite(MOTOR, HIGH);
 
   utils::configs::init();
   utils::shared_spi::init();

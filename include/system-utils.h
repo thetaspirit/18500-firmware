@@ -20,6 +20,8 @@
 #define RED 35
 #define YELLOW 36
 #define GREEN 37
+#define BUZZER 18
+#define MOTOR 17
 
 #define BUTTON_1 14
 #define BUTTON_2 15

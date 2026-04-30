@@ -34,7 +34,7 @@ namespace states
   unsigned long LONG_CLICK_MS = 2000;
   void _reset_states(void);
 
-  void clear_buttons()
+  void _clear_buttons()
   {
     // TODO make some way for buttons to be auto-cleared when read
     button_1 = false;
@@ -50,6 +50,8 @@ namespace states
   }
   void button2_callback(void *args)
   {
+    button2_ignore_falling = true;
+    // Artificially cause what happens when the countdown timer goes off
     alarms::alarm_callback(NULL);
   }
   void button3_callback(void *args) {}
@@ -152,7 +154,7 @@ namespace states
     case TimeState::DONE:
       if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         time_state = TimeState::SYNC;
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing gps submenu -> time.");
@@ -161,14 +163,14 @@ namespace states
     case TimeState::TIMEOUT:
       if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         time_state = TimeState::SYNC;
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing gps submenu -> time.");
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         // trying again
         time_state = TimeState::SYNC;
       }
@@ -186,19 +188,19 @@ namespace states
     case TimezoneState::DONE:
       if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         DEBUG_PRINTLN("Decremented UTC offset.");
         utils::configs::decrement_utc_offset();
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         DEBUG_PRINTLN("Incremented UTC offset.");
         utils::configs::increment_utc_offset();
       }
       else if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         DEBUG_PRINTLN("Begin timezone detection.");
         estimated_timezone = gnss_time::estimate_utc_offset();
         DEBUG_PRINTLN("Done timezone detection.");
@@ -206,7 +208,7 @@ namespace states
       }
       else if (button_4)
       {
-        clear_buttons();
+        _clear_buttons();
         DEBUG_PRINTLN("Going back to gps sub-menu.");
         timezone_state = TimezoneState::DONE; // set this state back before leaving
         gnss_state = GNSSstate::TIMEZONE_HIGHLIGHTED;
@@ -240,19 +242,19 @@ namespace states
     case GNSSstate::TIME_HIGHLIGHTED:
       if (button_1 || button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         gnss_state = GNSSstate::TIMEZONE_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing gps submenu -> timezone.");
       }
       else if (button_4)
       {
-        clear_buttons();
+        _clear_buttons();
         DEBUG_PRINTLN("Going back to main menu.");
         menu_state = MenuState::GNSS_HIGHLIGHTED;
       }
       else if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         gnss_state = GNSSstate::TIME;
         DEBUG_PRINTLN("Entering gps->time sub-submenu.");
       }
@@ -260,19 +262,19 @@ namespace states
     case GNSSstate::TIMEZONE_HIGHLIGHTED:
       if (button_1 || button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing gps submenu -> time.");
       }
       else if (button_4)
       {
-        clear_buttons();
+        _clear_buttons();
         DEBUG_PRINTLN("Going back to main menu.");
         menu_state = MenuState::GNSS_HIGHLIGHTED;
       }
       else if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         gnss_state = GNSSstate::TIMEZONE;
         DEBUG_PRINTLN("Entering gps->timezone sub-submenu.");
       }
@@ -334,7 +336,7 @@ namespace states
     case BluetoothState::DONE:
       if (button_1)
       { // go back to previous menu
-        clear_buttons();
+        _clear_buttons();
         // set state back to READY before leaving!
         ble_state = BluetoothState::READY;
         menu_state = MenuState::BLUETOOTH_HIGHLIGHTED;
@@ -343,7 +345,7 @@ namespace states
     case BluetoothState::TIMEOUT:
       if (button_1)
       { // go back to previous menu
-        clear_buttons();
+        _clear_buttons();
         // set state back to READY before leaving!
         ble_state = BluetoothState::READY;
         DEBUG_PRINTLN("Showing menu -> bluetooth");
@@ -351,7 +353,7 @@ namespace states
       }
       else if (button_3)
       { // user wants to try again
-        clear_buttons();
+        _clear_buttons();
         ble_schedule::start();
         ble_state = BluetoothState::WAITING;
         ble_schedule::block_until_connected(BLE_CONNECT_TIMEOUT);
@@ -372,18 +374,18 @@ namespace states
     case MenuState::SOUND:
       if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         utils::configs::toggle_sound();
       }
       else if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::BRIGHTNESS;
         DEBUG_PRINTLN("Showing menu -> brightness.");
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::VIBRATION;
         DEBUG_PRINTLN("Showing menu -> vibrate.");
       }
@@ -391,18 +393,18 @@ namespace states
     case MenuState::VIBRATION:
       if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         utils::configs::toggle_vibrate();
       }
       else if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::SOUND;
         DEBUG_PRINTLN("Showing menu -> sound.");
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::BLUETOOTH_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing menu -> bluetooth.");
       }
@@ -410,18 +412,18 @@ namespace states
     case MenuState::BRIGHTNESS:
       if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         utils::configs::toggle_brightness();
       }
       else if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::GNSS_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing menu -> GPS.");
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::SOUND;
         DEBUG_PRINTLN("Showing menu -> sound.");
       }
@@ -429,7 +431,7 @@ namespace states
     case MenuState::BLUETOOTH_HIGHLIGHTED:
       if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         if (ble_state == BluetoothState::READY)
         {
           menu_state = MenuState::BLUETOOTH;
@@ -441,13 +443,13 @@ namespace states
       }
       else if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::VIBRATION;
         DEBUG_PRINTLN("Showing menu -> vibrate.");
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::GNSS_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing menu -> GPS.");
       }
@@ -458,7 +460,7 @@ namespace states
     case MenuState::GNSS_HIGHLIGHTED:
       if (button_2)
       {
-        clear_buttons();
+        _clear_buttons();
         // Enter the gps submenu
         menu_state = MenuState::GNSS;
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
@@ -466,13 +468,13 @@ namespace states
       }
       else if (button_1)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::BLUETOOTH_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing menu -> bluetooth.");
       }
       else if (button_3)
       {
-        clear_buttons();
+        _clear_buttons();
         menu_state = MenuState::BRIGHTNESS;
         DEBUG_PRINTLN("Showing menu -> brightness.");
       }
@@ -485,18 +487,95 @@ namespace states
     }
   }
 
+  TaskHandle_t sound_the_alarm_task;
+
+  void sound_the_alarm(void *parameter)
+  {
+    while (true)
+    {
+      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+      DEBUG_PRINTF("Alarm starting: \"%s\"\n", alarms::get_current_alarm()->e->name);
+
+      while (true)
+      {
+        if (ulTaskNotifyTake(pdTRUE, 0) > 0)
+        {
+          DEBUG_PRINTLN("Alarm stopped.");
+          break;
+        }
+
+        // TODO check for user configs
+        digitalWrite(MOTOR, LOW); // turn on the buzzer
+
+        digitalWrite(RED, HIGH);
+        tone(BUZZER, 440);
+        vTaskDelay(pdMS_TO_TICKS(500));
+
+        digitalWrite(RED, LOW);
+        noTone(BUZZER);
+        vTaskDelay(pdMS_TO_TICKS(500));
+      }
+    }
+  }
+
+  void alarm_off()
+  {
+    xTaskNotifyGive(sound_the_alarm_task);
+    digitalWrite(RED, LOW);
+    digitalWrite(YELLOW, LOW);
+    digitalWrite(GREEN, LOW);
+
+    noTone(BUZZER);
+
+    digitalWrite(MOTOR, HIGH);
+  }
+
   void _handle_notif()
   {
     switch (notif_state)
     {
+
     case NotifState::ALARM:
+    {
+      // treat this portion as if the alarm has just gone off.
+      uint32_t tag = rfid::read_uid();
+      if (tag != 0)
+      {
+        DEBUG_PRINTF("Found RFID %x\n", tag);
+        alarm_off();
+        alarms::respond_to_alarm(alarms::Response::DONE);
+        notif_state = NotifState::DONE;
+      }
+      if (button_1)
+      {
+        _clear_buttons();
+        alarm_off();
+        alarms::respond_to_alarm(alarms::Response::IGNORE);
+        notif_state = NotifState::IGNORE;
+      }
+      else if (button_2)
+      {
+        _clear_buttons();
+        alarm_off();
+        alarms::respond_to_alarm(alarms::Response::DONE);
+        notif_state = NotifState::DONE;
+      }
+      else if (button_3)
+      {
+        _clear_buttons();
+        alarm_off();
+        alarms::respond_to_alarm(alarms::Response::SNOOZE);
+        notif_state = NotifState::SNOOZE;
+      }
       break;
+    }
     case NotifState::DONE:
       break;
     case NotifState::IGNORE:
       break;
     case NotifState::SNOOZE:
       break;
+
     case NotifState::WRONG_RFID:
       break;
     default:
@@ -552,6 +631,15 @@ namespace states
     attachInterrupt(digitalPinToInterrupt(BUTTON_2), button2_isr, CHANGE);
     attachInterrupt(digitalPinToInterrupt(BUTTON_3), button3_isr, CHANGE);
     attachInterrupt(digitalPinToInterrupt(BUTTON_4), button4_isr, CHANGE);
+
+    xTaskCreate(
+        sound_the_alarm,      // function
+        "Sound the Alarm",    // name
+        3000,                 // stack size
+        NULL,                 // parameter
+        1,                    // priority
+        &sound_the_alarm_task // handle
+    );
   }
 
   void background_task(void *parameters)
@@ -564,16 +652,18 @@ namespace states
       switch (main_state)
       {
       case MainState::HOME:
+        digitalWrite(RED, HIGH);
         digitalWrite(YELLOW, HIGH);
+        digitalWrite(GREEN, HIGH);
         if (button_1)
         {
-          clear_buttons();
+          _clear_buttons();
           DEBUG_PRINTLN("Entering the menu.");
           main_state = MainState::MENU;
         }
         else if (button_2)
         {
-          clear_buttons();
+          _clear_buttons();
           DEBUG_PRINTLN("Entering the today.");
           main_state = MainState::TODAY;
         }
@@ -584,13 +674,12 @@ namespace states
       case MainState::TODAY:
         if (button_1)
         {
-          clear_buttons();
+          _clear_buttons();
           DEBUG_PRINTLN("Going back home.");
           main_state = MainState::HOME;
         }
         break;
       case MainState::NOTIF:
-        digitalWrite(RED, HIGH);
         _handle_notif();
         break;
       default:
@@ -605,6 +694,7 @@ namespace states
     _reset_states();
     main_state = MainState::NOTIF;
     notif_state = NotifState::ALARM;
+    xTaskNotifyGive(sound_the_alarm_task);
   }
 
   MainState get_main()
