@@ -36,6 +36,7 @@ namespace states
 
   void clear_buttons()
   {
+    // TODO make some way for buttons to be auto-cleared when read
     button_1 = false;
     button_2 = false;
     button_3 = false;
@@ -144,7 +145,7 @@ namespace states
       }
       else
       {
-        DEBUG_PRINTLN("Unable to get date or time.");
+        DEBUG_PRINTLN("Unable to get date or time.  Try touching grass.");
         time_state = TimeState::TIMEOUT;
       }
       break;
@@ -167,6 +168,7 @@ namespace states
       }
       else if (button_3)
       {
+        clear_buttons();
         // trying again
         time_state = TimeState::SYNC;
       }
@@ -185,18 +187,21 @@ namespace states
       if (button_1)
       {
         clear_buttons();
+        DEBUG_PRINTLN("Decremented UTC offset.");
         utils::configs::decrement_utc_offset();
       }
       else if (button_3)
       {
         clear_buttons();
+        DEBUG_PRINTLN("Incremented UTC offset.");
         utils::configs::increment_utc_offset();
       }
-      else if (button_3)
+      else if (button_2)
       {
         clear_buttons();
         DEBUG_PRINTLN("Begin timezone detection.");
         estimated_timezone = gnss_time::estimate_utc_offset();
+        DEBUG_PRINTLN("Done timezone detection.");
         timezone_state = TimezoneState::SYNC;
       }
       else if (button_4)
@@ -239,6 +244,12 @@ namespace states
         gnss_state = GNSSstate::TIMEZONE_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing gps submenu -> timezone.");
       }
+      else if (button_4)
+      {
+        clear_buttons();
+        DEBUG_PRINTLN("Going back to main menu.");
+        menu_state = MenuState::GNSS_HIGHLIGHTED;
+      }
       else if (button_2)
       {
         clear_buttons();
@@ -252,6 +263,12 @@ namespace states
         clear_buttons();
         gnss_state = GNSSstate::TIME_HIGHLIGHTED;
         DEBUG_PRINTLN("Showing gps submenu -> time.");
+      }
+      else if (button_4)
+      {
+        clear_buttons();
+        DEBUG_PRINTLN("Going back to main menu.");
+        menu_state = MenuState::GNSS_HIGHLIGHTED;
       }
       else if (button_2)
       {
@@ -468,7 +485,24 @@ namespace states
     }
   }
 
-  void _handle_notif() {}
+  void _handle_notif()
+  {
+    switch (notif_state)
+    {
+    case NotifState::ALARM:
+      break;
+    case NotifState::DONE:
+      break;
+    case NotifState::IGNORE:
+      break;
+    case NotifState::SNOOZE:
+      break;
+    case NotifState::WRONG_RFID:
+      break;
+    default:
+      break;
+    }
+  }
 
   void _reset_states()
   {
