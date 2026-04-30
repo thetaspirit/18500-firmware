@@ -1,4 +1,4 @@
-
+#pragma once
 #include "Graphics/healthBar.h"
 #include "Graphics/SoundSel.h"
 #include "Graphics/battNeedCharge.h"

@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include "draw-graphics.h"
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <SD.h>
@@ -38,6 +38,8 @@ states::BluetoothState BLEstate = states::get_bluetooth();
 states::MenuState menuState;
 states::GNSSstate GNSSstate = states::get_gnss();
 states::TimeState timeState;
+states::MainState mainState = states::get_main();
+states::NotifState alarmState =  states::get_notif();
 
 bool toggleSound = utils::configs::get_sound();
 bool toggleVibration = utils::configs::get_vibrate();
@@ -80,7 +82,7 @@ RemiCharacter character;
 
 //volatile Screen currScreen = HOME;
 
-uint16_t frameDelay = 1000 / FPS;
+void drawMenu();
 
 
 
@@ -166,55 +168,7 @@ void drawReminder(){
   spr.pushSprite(0, 0);
 }
 
-void drawMenu()
-{
-  spr.fillSprite(TFT_BLACK);
 
-  switch (menuState) {
-
-    case states::MenuState::SOUND:
-      if (toggleSound)
-        spr.pushImage(0, 0, spr.width(), spr.height(), soundOn);
-      else
-        spr.pushImage(0, 0, spr.width(), spr.height(), soundOff);
-      break;
-
-
-    case states::MenuState::VIBRATION:
-      if (toggleVibration)
-        spr.pushImage(0, 0, spr.width(), spr.height(), vibrationOn);
-      else
-        spr.pushImage(0, 0, spr.width(), spr.height(), vibrationOff);
-      break;
-
-    case states::MenuState::BLUETOOTH:
-      drawBLE();
-      break;
-
-    case states::MenuState::BLUETOOTH_HIGHLIGHTED:
-      spr.pushImage(0, 0, spr.width(), spr.height(), bluetooth);
-      break;
-
-    case states::MenuState::GNSS:
-      drawGNSSMain();
-      break;
-
-    case states::MenuState::GNSS_HIGHLIGHTED:
-      spr.pushImage(0, 0, spr.width(), spr.height(), gpsSel);
-      break;
-
-    case states::MenuState::BRIGHTNESS:
-      if (brightness == 2)
-        spr.pushImage(0, 0, spr.width(), spr.height(), brightness_high);
-      else
-        spr.pushImage(0, 0, spr.width(), spr.height(), brightness_low);
-      break;
-  }
-
-  spr.pushSprite(0, 0);
-
-  
-}
 
 void setCharacterAnim(RemiCharacter &c, const char* anim, uint8_t frames) {
 
@@ -302,6 +256,19 @@ void drawHome() {
 
 
 
+void drawTimeZone() {
+  spr.fillSprite(TFT_WHITE);
+  spr.pushImage(0, 0, spr.width(), spr.height(), GNSSTimeZone);
+
+  spr.setTextColor(TFT_BLACK);
+  spr.setFreeFont(&ari_w9500_bold10pt7b);
+
+  spr.drawString("UTC", 120, 72);
+  //Write code for incrementing and decrementing UTC
+
+  spr.pushSprite(0,0);
+
+}
 
 void drawGNSSMain(){
   spr.fillSprite(TFT_WHITE);
@@ -331,19 +298,7 @@ void drawGNSSMain(){
 }
 
 //redraw should probably be asserted
-void drawTimeZone() {
-  spr.fillSprite(TFT_WHITE);
-  spr.pushImage(0, 0, spr.width(), spr.height(), GNSSTimeZone);
 
-  spr.setTextColor(TFT_BLACK);
-  spr.setFreeFont(&ari_w9500_bold10pt7b);
-
-  spr.drawString("UTC", 120, 72);
-  //Write code for incrementing and decrementing UTC
-
-  spr.pushSprite(0,0);
-
-}
 
 void drawTimeSync() {
   switch(timeState){
@@ -387,41 +342,103 @@ void drawBLE(){
 
 }
 
+void drawMenu()
+{
+  spr.fillSprite(TFT_BLACK);
+
+  switch (menuState) {
+
+    case states::MenuState::SOUND:
+      if (toggleSound)
+        spr.pushImage(0, 0, spr.width(), spr.height(), soundOn);
+      else
+        spr.pushImage(0, 0, spr.width(), spr.height(), soundOff);
+      break;
+
+
+    case states::MenuState::VIBRATION:
+      if (toggleVibration)
+        spr.pushImage(0, 0, spr.width(), spr.height(), vibrationOn);
+      else
+        spr.pushImage(0, 0, spr.width(), spr.height(), vibrationOff);
+      break;
+
+    case states::MenuState::BLUETOOTH:
+      drawBLE();
+      break;
+
+    case states::MenuState::BLUETOOTH_HIGHLIGHTED:
+      spr.pushImage(0, 0, spr.width(), spr.height(), bluetooth);
+      break;
+
+    case states::MenuState::GNSS:
+      drawGNSSMain();
+      break;
+
+    case states::MenuState::GNSS_HIGHLIGHTED:
+      spr.pushImage(0, 0, spr.width(), spr.height(), gpsSel);
+      break;
+
+    case states::MenuState::BRIGHTNESS:
+      if (brightness == 2)
+        spr.pushImage(0, 0, spr.width(), spr.height(), brightness_high);
+      else
+        spr.pushImage(0, 0, spr.width(), spr.height(), brightness_low);
+      break;
+  }
+
+  spr.pushSprite(0, 0);
+
+  
+}
+
 void drawTask(void *param) {
 
   for (;;) {
 
-    if (currScreen == HOME) {
+    switch (mainState) {
 
-      if (reminderAlert) {
+      // ---------------- HOME ----------------
+      case states::MainState::HOME:
 
-        if (needsRedraw) {
-          drawReminder();
-          needsRedraw = false;
-        }
-      }
-
-      else{
         updateAnimation(character);
 
-        if (animTick) {
-          drawHome();
-          animTick = false;
+        if (alarmState == states::NotifState::ALARM) {
+          drawReminder();
         }
+        else {
+          drawHome();
+        }
+        break;
 
-      }
+      // ---------------- MENU ----------------
+      case states::MainState::MENU:
+        drawMenu();   // menu internally handles BLE / GNSS / etc
+        break;
 
-      
-    }
-
-    else if (currScreen == MENU) {
-
-      if (needsRedraw) {
-        drawMenu();
-        needsRedraw = false;
-      }
+      // ---------------- NOTIF ----------------
+      case states::MainState::TODAY:
+        //drawToday();
+        break;
     }
 
     vTaskDelay(1);
   }
+}
+
+void drawSetup() {
+
+
+  tft.init();
+  tft.setRotation(0);
+
+  spr.createSprite(SCREEN_W, SCREEN_H);
+  spr.setSwapBytes(true);
+
+  
+
+  character.type = RACCOON;
+  setCharacterAnim(character, "idleRaccoon", 5);
+
+  drawHome();
 }

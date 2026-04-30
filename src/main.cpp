@@ -7,6 +7,7 @@
 #include "state-machine.h"
 #include "alarms.h"
 #include "debug.h"
+#include "draw-graphics.h"
 
 void print_states(void *parameters)
 {
@@ -56,6 +57,7 @@ void setup()
   alarms::init();
 
   states::init();
+  drawSetup();
 
   xTaskCreate(
       print_states, // function
@@ -74,6 +76,16 @@ void setup()
       2,                       // priority
       NULL,                    // handle
       1                        // core
+  );
+
+  xTaskCreatePinnedToCore(
+      drawTask, // function
+      "drawTask",       // name
+      8192,                    // stack size
+      NULL,                    // parameter
+      2,                       // priority
+      NULL,                    // handle
+      0                       // core
   );
 
   while (true)
