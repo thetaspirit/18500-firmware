@@ -6,22 +6,23 @@
 #include "system-utils.h"
 #include "state-machine.h"
 #include "alarms.h"
+#include "debug.h"
 
 void print_states(void *parameters)
 {
   while (true)
   {
-    Serial.println("--States:--");
-    Serial.printf("* Main state: %d\n", states::get_main());
-    Serial.printf("* Menu state: %d\n", states::get_menu());
-    Serial.printf("* Bluetooth state: %d\n", states::get_bluetooth());
-    Serial.printf("* GNSS state: %d\n", states::get_gnss());
-    Serial.printf("* Time state: %d\n", states::get_time());
-    Serial.printf("* Timezone state: %d\n", states::get_timezone());
-    Serial.printf("* Notif state: %d\n", states::get_notif());
+    DEBUG_PRINTLN("--States:--");
+    DEBUG_PRINTF("* Main state: %d\n", states::get_main());
+    DEBUG_PRINTF("* Menu state: %d\n", states::get_menu());
+    DEBUG_PRINTF("* Bluetooth state: %d\n", states::get_bluetooth());
+    DEBUG_PRINTF("* GNSS state: %d\n", states::get_gnss());
+    DEBUG_PRINTF("* Time state: %d\n", states::get_time());
+    DEBUG_PRINTF("* Timezone state: %d\n", states::get_timezone());
+    DEBUG_PRINTF("* Notif state: %d\n", states::get_notif());
 
     UBaseType_t watermark = uxTaskGetStackHighWaterMark(NULL);
-    Serial.printf("Stack remaining: %u bytes\n", watermark);
+    DEBUG_PRINTF("Stack remaining: %u bytes\n", watermark);
 
     vTaskDelay(pdMS_TO_TICKS(15000));
   }
@@ -30,7 +31,7 @@ void print_states(void *parameters)
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("Beginning.");
+  DEBUG_PRINTLN("Beginning.");
   analogReadMilliVolts(BATT_MON);
   utils::buttons::init();
   pinMode(RED, OUTPUT);

@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "gnss-time.h"
+#include "debug.h"
 
 #define RED 35
 #define YELLOW 36

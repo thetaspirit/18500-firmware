@@ -324,7 +324,7 @@ namespace utils
       uint16_t now = gnss_time::get_minutes_after_midnight();
       if (time <= now)
       {
-        Serial.printf("Error: wakeup time = %d but now = %d.  Device wakeup not set.\n", time, now);
+        DEBUG_PRINTF("Error: wakeup time = %d but now = %d.  Device wakeup not set.\n", time, now);
         return;
       }
 
@@ -337,7 +337,7 @@ namespace utils
     {
       configs::write_values_to_memory();
       set_next_wakeup_time(alarms::get_upcoming_alarm()->time);
-      Serial.println("--Going to sleep now.--");
+      DEBUG_PRINTLN("--Going to sleep now.--");
       esp_deep_sleep_start();
     }
   }
@@ -415,7 +415,7 @@ namespace utils
       sd_init = SD.begin(SD_CS, shared_spi::shared_SPI);
       if (!sd_init)
       {
-        Serial.println("SD card init failed");
+        DEBUG_PRINTLN("SD card init failed");
       }
 
       // After init, ensure SD CS is released

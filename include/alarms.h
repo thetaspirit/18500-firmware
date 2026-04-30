@@ -5,6 +5,7 @@
 #include "rfid-remis.h"
 #include "gnss-time.h"
 #include "system-utils.h"
+#include "debug.h"
 
 #define ALARM_LOG_FILEPATH "/alarm-log.csv"
 

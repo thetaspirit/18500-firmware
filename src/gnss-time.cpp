@@ -199,17 +199,17 @@ namespace gnss_time
 
     do
     {
-      Serial.println("GNSS: trying 38400 baud");
+      DEBUG_PRINTLN("GNSS: trying 38400 baud");
       GPS_SERIAL.begin(38400, SERIAL_8N1, rx_pin, tx_pin, false, 20000UL, 112);
       if (_gnss.begin(GPS_SERIAL) == true)
         break;
 
       vTaskDelay(100);
-      Serial.println("GNSS: trying 9600 baud");
+      DEBUG_PRINTLN("GNSS: trying 9600 baud");
       GPS_SERIAL.begin(9600, SERIAL_8N1, rx_pin, tx_pin, false, 20000UL, 112);
       if (_gnss.begin(GPS_SERIAL) == true)
       {
-        Serial.println("GNSS: connected at 9600 baud, switching to 38400");
+        DEBUG_PRINTLN("GNSS: connected at 9600 baud, switching to 38400");
         _gnss.setSerialRate(38400);
         vTaskDelay(100);
       }
@@ -219,7 +219,7 @@ namespace gnss_time
         vTaskDelay(2000); // Wait a bit before trying again to limit the Serial output
       }
     } while (1);
-    Serial.println("GNSS serial connected");
+    DEBUG_PRINTLN("GNSS serial connected");
 
     _gnss.setUART1Output(COM_TYPE_UBX); // Set the UART port to output UBX only
     // _gnss.setNavigationFrequency(4);    // set navigation frequency to 4 Hz
@@ -236,7 +236,7 @@ namespace gnss_time
   int estimate_utc_offset()
   {
     uint32_t horiz_acc = _gnss.getHorizontalAccuracy();
-    Serial.printf("Horizontal acc = %d\n", horiz_acc);
+    DEBUG_PRINTF("Horizontal acc = %d\n", horiz_acc);
 
     // give up if location solution is bad
     if (!get_gnss_fix_ok())
@@ -311,7 +311,7 @@ namespace gnss_time
       utc_datetime.day = _gnss.getDay();
       utc_datetime.day_of_week = _calculateDayOfWeek(utc_datetime.year % 100, utc_datetime.month, utc_datetime.day);
 
-      Serial.printf("Date is %02d/%02d/%d\n", utc_datetime.day, utc_datetime.month, utc_datetime.year);
+      DEBUG_PRINTF("Date is %02d/%02d/%d\n", utc_datetime.day, utc_datetime.month, utc_datetime.year);
 
       s = UPDATED_DATE_ONLY;
     }
@@ -323,7 +323,7 @@ namespace gnss_time
       utc_datetime.minute = _gnss.getMinute();
       utc_datetime.second = _gnss.getSecond();
 
-      Serial.printf("Time is %02d:%02d:%02d\n", utc_datetime.hour, utc_datetime.minute, utc_datetime.second);
+      DEBUG_PRINTF("Time is %02d:%02d:%02d\n", utc_datetime.hour, utc_datetime.minute, utc_datetime.second);
 
       if (s == UPDATED_DATE_ONLY)
       {

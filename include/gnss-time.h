@@ -25,6 +25,7 @@
 #pragma once
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 #include "system-utils.h"
+#include "debug.h"
 
 #ifndef ESP32TIME_H
 #define ESP32TIME_H
