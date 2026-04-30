@@ -57,7 +57,7 @@ namespace states
   {
     // READY,
     SYNC,
-    TIMEOUT,
+    // TIMEOUT,
     DONE
   };
 

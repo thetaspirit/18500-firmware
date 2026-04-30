@@ -1,6 +1,6 @@
 #pragma once
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINTF(...)       \
@@ -19,7 +19,7 @@
   {                       \
   } while (0)
 #define DEBUG_PRINTLN(...) \
-  do                  \
-  {                   \
+  do                       \
+  {                        \
   } while (0)
 #endif

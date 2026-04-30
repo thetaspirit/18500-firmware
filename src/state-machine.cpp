@@ -176,16 +176,49 @@ namespace states
     }
   }
 
+  int estimated_timezone;
   void _handle_timezone()
   {
     switch (timezone_state)
     {
     case TimezoneState::DONE:
-      // TODO button controlls to inc/dec offset, go back, auto-detect
+      if (button_1)
+      {
+        clear_buttons();
+        utils::configs::decrement_utc_offset();
+      }
+      else if (button_3)
+      {
+        clear_buttons();
+        utils::configs::increment_utc_offset();
+      }
+      else if (button_3)
+      {
+        clear_buttons();
+        DEBUG_PRINTLN("Begin timezone detection.");
+        estimated_timezone = gnss_time::estimate_utc_offset();
+        timezone_state = TimezoneState::SYNC;
+      }
+      else if (button_4)
+      {
+        clear_buttons();
+        DEBUG_PRINTLN("Going back to gps sub-menu.");
+        timezone_state = TimezoneState::DONE; // set this state back before leaving
+        gnss_state = GNSSstate::TIMEZONE_HIGHLIGHTED;
+      }
       break;
     case TimezoneState::SYNC:
-      break;
-    case TimezoneState::TIMEOUT:
+      // code reaches this point when it is done estimating the timezone
+      if (estimated_timezone == UTC_OFFSET_UNAVAILABLE)
+      {
+        DEBUG_PRINTLN("Unable to estimate timezone.  Try touching grass.");
+        timezone_state = TimezoneState::DONE;
+      }
+      else
+      {
+        utils::configs::set_utc_offset(estimated_timezone);
+        timezone_state = TimezoneState::DONE;
+      }
       break;
     default:
       break;
