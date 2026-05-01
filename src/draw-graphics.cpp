@@ -7,6 +7,7 @@
 #include <FS.h>
 #include <string>
 #include "state-machine.h"
+#include "system-utils.h"
 
 // ================= TFT =================
 TFT_eSPI tft = TFT_eSPI();
@@ -91,6 +92,8 @@ enum RenderMode {
   RENDER_MENU,
   RENDER_GNSS,
   RENDER_BLUETOOTH,
+  RENDER_GNSS_HIGHLIGHT,
+  RENDER_BLUETOOTH_HIGHLIGHT,
   RENDER_TODAY,
   RENDER_NOTIF
 };
@@ -147,46 +150,48 @@ void updateAnimation(RemiCharacter &c) {
 void drawRLEFrame(const char* path, int x, int y, int w, int h)
 {
   File f = SD.open(path);
-  if (!f) return;
+  if (!f) {
+    Serial.print("Missing: ");
+    Serial.println(path);
+    return;
+  }
 
   static uint16_t buffer[SCREEN_W];
 
   int px = 0;
   int py = 0;
 
-  memset(buffer, 0, sizeof(buffer));
-
   while (f.available() >= 4 && py < h)
   {
     uint16_t color = f.read() | (f.read() << 8);
     uint16_t run   = f.read() | (f.read() << 8);
 
-    if (run == 0 || run > 5000)
+    if (run == 0) {
+      Serial.println("Bad run 0");
       break;
+    }
 
-    while (run > 0)
+    while (run > 0 && py < h)
     {
-      buffer[px++] = color;
-      run--;
-
-      // ✅ HARD ROW BOUNDARY
+      // If row is full, draw it before writing more pixels
       if (px == w)
       {
         spr.pushImage(x, y + py, w, 1, buffer);
-
         px = 0;
         py++;
 
-        // clear row completely (important for no ghosting)
-        memset(buffer, 0, sizeof(buffer));
-
-        if (py >= h)
-        {
-          f.close();
-          return;
-        }
+        if (py >= h) break;
       }
+
+      buffer[px++] = color;
+      run--;
     }
+  }
+
+  // Draw final row if it was partially filled
+  if (px > 0 && py < h)
+  {
+    spr.pushImage(x, y + py, w, 1, buffer);
   }
 
   f.close();
@@ -224,13 +229,14 @@ RenderMode getRenderMode()
 
     case states::MainState::MENU:
     {
-      if (menuState == states::MenuState::GNSS ||
-          menuState == states::MenuState::GNSS_HIGHLIGHTED)
+      if (menuState == states::MenuState::GNSS)
         return RENDER_GNSS;
-
-      if (menuState == states::MenuState::BLUETOOTH ||
-          menuState == states::MenuState::BLUETOOTH_HIGHLIGHTED)
+      if (menuState == states::MenuState::GNSS_HIGHLIGHTED)
+        return RENDER_GNSS_HIGHLIGHT;
+      if (menuState == states::MenuState::BLUETOOTH)
         return RENDER_BLUETOOTH;
+      if (menuState == states::MenuState::BLUETOOTH_HIGHLIGHTED)
+        return RENDER_BLUETOOTH_HIGHLIGHT;
 
       return RENDER_MENU;
     }
@@ -289,9 +295,25 @@ void renderScreen()
       break;
     }
 
+    case RENDER_GNSS_HIGHLIGHT:
+    {
+      const char* path = "/Screens/GNSSselect.rle";  // your function
+      if (path && SD.exists(path))
+        drawRLEFrame(path, 0, 0, 240, 320);
+      break;
+    }
+
     case RENDER_BLUETOOTH:
     {
       const char* path = getMenuScreenPath(); // you define this
+      if (path)
+        drawRLEFrame(path, 0, 0, 240, 320);
+      break;
+    }
+
+    case RENDER_BLUETOOTH_HIGHLIGHT:
+    {
+      const char* path = "/Screens/BLEsel.rle"; // you define this
       if (path)
         drawRLEFrame(path, 0, 0, 240, 320);
       break;
@@ -334,10 +356,12 @@ const char* getScreenPath() {
     return getMenuScreenPath();
 
   if (mainState == states::MainState::NOTIF)
-    return "/Screens/notifScreen.rle";
+    return "/Screens/remindScreen.rle";
 
   if (mainState == states::MainState::TODAY)
     return "/Screens/remindersToday.rle";
+
+
 
   return nullptr;
 }
@@ -438,6 +462,7 @@ void drawTask(void *param)
 {
   static states::MainState lastMain = states::MainState::HOME;
   static states::MenuState lastMenu = states::MenuState::SOUND;
+  static states::GNSSstate lastGNSS = states::GNSSstate::TIME;
 
   for (;;)
   {
@@ -446,9 +471,14 @@ void drawTask(void *param)
     GNSSstate = states::get_gnss();
 
     bool stateChanged =
-      (mainState != lastMain || menuState != lastMenu);
+      (mainState != lastMain) ||
+      (menuState != lastMenu) ||
+      (GNSSstate != lastGNSS);
 
-    // HOME = animation-driven
+    bool leavingHome =
+      (lastMain == states::MainState::HOME &&
+       mainState != states::MainState::HOME);
+
     if (mainState == states::MainState::HOME)
     {
       updateAnimation(character);
@@ -461,8 +491,7 @@ void drawTask(void *param)
     }
     else
     {
-      // EVERYTHING ELSE = state-driven ONLY
-      if (stateChanged)
+      if (stateChanged || leavingHome)
       {
         renderScreen();
       }
@@ -470,6 +499,7 @@ void drawTask(void *param)
 
     lastMain = mainState;
     lastMenu = menuState;
+    lastGNSS = GNSSstate;
 
     vTaskDelay(pdMS_TO_TICKS(16));
   }
@@ -509,4 +539,7 @@ void drawSetup() {
 
   renderScreen();
   spr.pushSprite(0,0);
+
+  pinMode(SCREEN, OUTPUT);
+  digitalWrite(SCREEN, LOW);
 }
