@@ -57,13 +57,16 @@ namespace states
   { // Manually modify the health bar
     button3_ignore_falling = true;
     utils::configs::cycle_health();
+    DEBUG_PRINTF("Health = %d\n", utils::configs::get_health());
   }
   void button4_callback(void *args)
-  { // Manually put device to sleep
+  { // TODO Manually put device to sleep
   }
 
   void IRAM_ATTR button1_isr()
   {
+    // TODO disable interrupts or smth, becuase we're observing debounce (as in, lack thereof) issues
+    // regarding the rising edges.  sometimes the rising edges don't get ignored as they should
     if (gpio_get_level((gpio_num_t)BUTTON_1))
     {
       esp_timer_start_once(button1_timer, LONG_CLICK_MS * 1000);
@@ -381,6 +384,7 @@ namespace states
       {
         _clear_buttons();
         utils::configs::toggle_sound();
+        DEBUG_PRINTF("Sound = %d\n", utils::configs::get_sound());
       }
       else if (button_1)
       {
@@ -400,6 +404,7 @@ namespace states
       {
         _clear_buttons();
         utils::configs::toggle_vibrate();
+        DEBUG_PRINTF("Vibrate = %d\n", utils::configs::get_vibrate());
       }
       else if (button_1)
       {
@@ -419,6 +424,7 @@ namespace states
       {
         _clear_buttons();
         utils::configs::toggle_brightness();
+        DEBUG_PRINTF("Brightness = %d\n", utils::configs::get_brightness());
       }
       else if (button_1)
       {
@@ -512,8 +518,14 @@ namespace states
         // TODO check for user configs
 
         digitalWrite(RED, HIGH);
-        tone(BUZZER, 440);
-        digitalWrite(MOTOR, LOW); // turn on the buzzer
+        if (utils::configs::get_sound())
+        {
+          tone(BUZZER, 440);
+        }
+        if (utils::configs::get_vibrate())
+        {
+          digitalWrite(MOTOR, LOW); // turn on the buzzer
+        }
         vTaskDelay(pdMS_TO_TICKS(500));
 
         digitalWrite(RED, LOW);
@@ -556,6 +568,7 @@ namespace states
       {
         _clear_buttons();
         alarm_off();
+        DEBUG_PRINTLN("Ignoring alarm.");
         alarms::respond_to_alarm(alarms::Response::IGNORE);
         notif_state = NotifState::IGNORE;
       }
@@ -563,6 +576,7 @@ namespace states
       {
         _clear_buttons();
         alarm_off();
+        DEBUG_PRINTLN("Done alarm.");
         alarms::respond_to_alarm(alarms::Response::DONE);
         notif_state = NotifState::DONE;
       }
@@ -570,6 +584,7 @@ namespace states
       {
         _clear_buttons();
         alarm_off();
+        DEBUG_PRINTLN("Snoozing alarm.");
         alarms::respond_to_alarm(alarms::Response::SNOOZE);
         notif_state = NotifState::SNOOZE;
       }
