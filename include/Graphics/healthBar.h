@@ -1,4 +1,7 @@
 #pragma once
+#include <Arduino.h>
+#include <cstdint>
+#include <stdint.h>
 
 // 'healthBar_00', 112x32px
 const uint16_t  healthBar_00[] PROGMEM = {

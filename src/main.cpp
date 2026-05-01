@@ -49,6 +49,8 @@ void setup()
   pinMode(MOTOR, OUTPUT);
   digitalWrite(MOTOR, HIGH);
 
+  drawSetup();
+
   utils::configs::init();
   utils::shared_spi::init();
   utils::sd_card::init();
@@ -57,7 +59,6 @@ void setup()
   alarms::init();
 
   states::init();
-  drawSetup();
 
   xTaskCreate(
       print_states, // function
