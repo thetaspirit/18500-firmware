@@ -60,7 +60,7 @@ namespace states
   }
   void button4_callback(void *args)
   { // Manually put device to sleep
-    }
+  }
 
   void IRAM_ATTR button1_isr()
   {
@@ -510,14 +510,15 @@ namespace states
         }
 
         // TODO check for user configs
-        digitalWrite(MOTOR, LOW); // turn on the buzzer
 
         digitalWrite(RED, HIGH);
         tone(BUZZER, 440);
+        digitalWrite(MOTOR, LOW); // turn on the buzzer
         vTaskDelay(pdMS_TO_TICKS(500));
 
         digitalWrite(RED, LOW);
         noTone(BUZZER);
+        digitalWrite(MOTOR, HIGH);
         vTaskDelay(pdMS_TO_TICKS(500));
       }
     }

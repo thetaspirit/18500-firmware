@@ -30,11 +30,6 @@ void print_states(void *parameters)
 
 void setup()
 {
-  Serial.begin(115200);
-  DEBUG_PRINTLN("Beginning.");
-  analogReadMilliVolts(BATT_MON);
-  utils::buttons::init();
-
   pinMode(RED, OUTPUT);
   pinMode(YELLOW, OUTPUT);
   pinMode(GREEN, OUTPUT);
@@ -47,6 +42,11 @@ void setup()
 
   pinMode(MOTOR, OUTPUT);
   digitalWrite(MOTOR, HIGH);
+
+  Serial.begin(115200);
+  DEBUG_PRINTLN("Beginning.");
+  analogReadMilliVolts(BATT_MON);
+  utils::buttons::init();
 
   utils::configs::init();
   utils::shared_spi::init();
